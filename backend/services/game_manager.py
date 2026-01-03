@@ -6,7 +6,13 @@ from backend.models.player import Player
 from backend.models.game import Game, GameState
 from backend.models.lobby import Lobby, LobbyState
 from backend.state.game_store import store
-from backend.config import MAX_DRAW_UPDATES_PER_SECOND
+from backend.services.word_generator import word_generator
+from backend.services.image_processor import image_processor
+from backend.services.ai_service import get_ai_service, Prediction
+from backend.config import (
+    AI_CONFIDENCE_THRESHOLD,
+    MAX_DRAW_UPDATES_PER_SECOND,
+)
 
 class GameManager:
     def __init__(self, socketio=None):
@@ -161,8 +167,7 @@ class GameManager:
         game = lobby.start_new_game()
         store.add_game(game)
         game.state = GameState.STARTING
-        # TODO: Replace with word_generator.get_random_word() when implemented
-        word = "placeholder"
+        word = word_generator.get_random_word()
         game.start_round(word)
         self._start_round_timer(game.id)
         return word
@@ -212,8 +217,8 @@ class GameManager:
         if game is None or lobby is None:
             return
         
-        # TODO: Replace with word_generator.get_random_word(exclude=used_words) when implemented
-        word = "placeholder"
+        used_words = {r.word for r in game.round_history}
+        word = word_generator.get_random_word(exclude=used_words)
         
         game.start_round(word)
         self._start_round_timer(game.id)
@@ -243,6 +248,78 @@ class GameManager:
                 'lobby': lobby.to_dict()
             }, room=lobby.id)
     
+    def handle_draw_update(
+        self, 
+        player_id: str, 
+        canvas_data: str
+    ) -> Optional[Tuple[List[Prediction], bool]]:
+        player = store.get_player(player_id)
+        if player is None or player.current_lobby_id is None:
+            return None
+        
+        lobby = store.get_lobby(player.current_lobby_id)
+        if lobby is None or lobby.current_game is None:
+            return None
+        
+        game = lobby.current_game
+        if game.state != GameState.PLAYING or game.current_round is None:
+            return None
+        
+        if not self._check_rate_limit(player_id):
+            return None
+        
+        image_array = image_processor.process_canvas_data(canvas_data)
+        if image_array is None:
+            return None
+        
+        game.current_round.update_drawing(player_id, canvas_data)
+        
+        ai_service = get_ai_service()
+        predictions = ai_service.predict(image_array)
+        
+        target_word = game.current_round.word.lower()
+        would_be_correct = any(
+            p.label.lower() == target_word and p.confidence >= AI_CONFIDENCE_THRESHOLD
+            for p in predictions
+        )
+        
+        return predictions, would_be_correct
+    
+    def submit_drawing(
+        self, 
+        player_id: str, 
+        canvas_data: str
+    ) -> Optional[Tuple[List[Prediction], bool]]:
+        player = store.get_player(player_id)
+        if player is None or player.current_lobby_id is None:
+            return None
+        
+        lobby = store.get_lobby(player.current_lobby_id)
+        if lobby is None or lobby.current_game is None:
+            return None
+        
+        game = lobby.current_game
+        if game.state != GameState.PLAYING or game.current_round is None:
+            return None
+        
+        image_array = image_processor.process_canvas_data(canvas_data)
+        if image_array is None:
+            return None
+        
+        ai_service = get_ai_service()
+        predictions = ai_service.predict(image_array)
+        
+        target_word = game.current_round.word.lower()
+        is_correct = any(
+            p.label.lower() == target_word and p.confidence >= AI_CONFIDENCE_THRESHOLD
+            for p in predictions
+        )
+        
+        if is_correct:
+            self._handle_correct_prediction(game, lobby, player_id)
+        
+        return predictions, is_correct
+    
     def _check_rate_limit(self, player_id: str) -> bool:
         now = datetime.now()
         last_update = self._player_rate_limits.get(player_id)
@@ -255,6 +332,33 @@ class GameManager:
         
         self._player_rate_limits[player_id] = now
         return True
+    
+    def _handle_correct_prediction(self, game: Game, lobby: Lobby, winner_id: str) -> None:
+        self._cancel_round_timer(game.id)
+        
+        word = game.current_round.word
+        game.end_round(winner_id=winner_id)
+        
+        winner = game.get_player(winner_id)
+        
+        if self.socketio:
+            self.socketio.emit('round_end', {
+                'lobby_id': lobby.id,
+                'game_id': game.id,
+                'winner_id': winner_id,
+                'winner_username': winner.username if winner else None,
+                'word': word,
+                'scores': game.get_scores(),
+                'timeout': False
+            }, room=lobby.id)
+        
+        if game.state == GameState.FINISHED:
+            self._end_game(game, lobby)
+        else:
+            def delayed_next_round():
+                eventlet.sleep(3.0)
+                self._start_next_round(game, lobby)
+            eventlet.spawn(delayed_next_round)
     
     def get_available_lobbies(self) -> List[dict]:
         return [lobby.to_dict() for lobby in store.get_available_lobbies()]
