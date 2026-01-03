@@ -19,15 +19,7 @@ class GameState(Enum):
 
 @dataclass
 class Game:
-    """
-    id: Unique identifier for the game
-    players: List of players in the game
-    current_round: The active round (None if not in a round)
-    rounds_played: Number of completed rounds
-    max_rounds: Maximum rounds before game ends
-    state: Current game state
-    created_at: When the game was created
-    """
+    lobby_id: str = ""
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     players: List[Player] = field(default_factory=list)
     current_round: Optional[Round] = None
@@ -108,8 +100,8 @@ class Game:
         
         self.current_round = None
     
-    def get_scores(self) -> Dict[str, int]:
-        return {p.id: p.score for p in self.players}
+    def get_scores(self) -> Dict[str, dict]:
+        return {p.id: {'username': p.username, 'score': p.score} for p in self.players}
     
     def get_winner(self) -> Optional[Player]:
         if not self.players:

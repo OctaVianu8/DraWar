@@ -2,23 +2,13 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, Dict, Any
-
+from ..config import ROUND_DURATION_SECONDS
 
 @dataclass
 class Round:
-    """
-    id: Unique identifier for the round
-    game_id: ID of the game this round belongs to
-    word: The secret word players must draw
-    duration: Round duration in seconds
-    start_time: When the round started
-    end_time: When the round ended (None if still active)
-    winner_id: ID of the player who won (None if no winner yet)
-    player_drawings: Latest canvas data for each player
-    """
     game_id: str
     word: str
-    duration: int = 60
+    duration: int = ROUND_DURATION_SECONDS
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     start_time: datetime = field(default_factory=datetime.now)
     end_time: Optional[datetime] = None
