@@ -40,15 +40,6 @@ class ImageProcessor:
         
         return self.preprocess(image)
     
-    def process_for_display(self, canvas_data: str, max_size: int = 256) -> Optional[bytes]:
-        image = self.decode_base64(canvas_data)
-        if image is None:
-            return None
-        
-        image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
-        
-        buffer = io.BytesIO()
-        image.save(buffer, format="PNG")
-        return buffer.getvalue()
+   
 
 image_processor = ImageProcessor()
