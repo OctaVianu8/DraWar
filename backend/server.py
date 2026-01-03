@@ -9,8 +9,6 @@ from backend.handlers.socket_handlers import register_handlers
 def create_app():
     app = Flask(__name__, template_folder='../templates')
     app.config['SECRET_KEY'] = SECRET_KEY
-    
-    # Enable CORS for ngrok and cross-origin requests
     CORS(app, origins="*")
     
     return app
@@ -24,19 +22,13 @@ def create_socketio(app):
         logger=DEBUG,
         engineio_logger=DEBUG
     )
-    
-    # Register all event handlers
     register_handlers(socketio)
     
     return socketio
 
-
-# Create app and socketio instances
 app = create_app()
 socketio = create_socketio(app)
 
-
-# === HTTP Routes (for health checks and basic info) ===
 
 @app.route('/')
 def index():
@@ -58,8 +50,6 @@ def list_games():
     from backend.services.game_manager import game_manager
     return {'games': game_manager.get_available_games()}
 
-
-# === Main Entry Point ===
 
 if __name__ == '__main__':
     print(f"""
