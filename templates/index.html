@@ -1,30 +1,62 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>DraWar</title>
-    <style>
-        body {
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            font-family: Arial, sans-serif;
-            font-size: 3rem;
-            text-align:center;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DraWar - minimal</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
 </head>
+
 <body>
-    <div>
-        <h1>DraWar</h1>
+    <div class="container">
+        <div class="panel">
+            <h1>🎨 DraWar</h1>
+            <div id="connectionStatus" class="status disconnected">Disconnected</div>
+
+            <input type="text" id="username" placeholder="Username" value="">
+            <button id="authBtn" onclick="authenticate()">Authenticate</button>
+
+            <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+
+            <div id="lobbyControls">
+                <button id="createBtn" onclick="createGame()" disabled>Create Game</button>
+                <input type="text" id="gameIdInput" placeholder="Game ID...">
+                <button id="joinBtn" onclick="joinGame()" disabled>Join</button>
+            </div>
+
+            <div id="gameControls" style="display:none;">
+                <div class="game-info">
+                    <p>ID: <span id="currentGameId">-</span> <button onclick="copyGameId()">📋</button></p>
+                    <p>State: <span id="gameState">-</span></p>
+                </div>
+
+                <button id="readyBtn" onclick="handleReadyClick()">✓ Ready!</button>
+                <button id="leaveBtn" onclick="leaveGame()" class="secondary">Leave</button>
+            </div>
+
+            <h3>👥 Players</h3>
+            <div id="playersList"></div>
+        </div>
+
+        <div class="panel">
+            <div id="roundDisplay" class="round-display" style="display:none;">Round <span id="currentRound">1</span>
+            </div>
+            <div id="wordDisplay" class="word-display" style="display:none;">Draw: ???</div>
+            <div id="timer" class="timer"></div>
+
+            <canvas id="drawingCanvas" width="400" height="400"></canvas>
+
+            <div class="canvas-controls">
+                <button onclick="clearCanvas()">🗑️ Clear</button>
+                <button id="submitBtn" onclick="submitDrawing()">✅ Submit</button>
+            </div>
+
+        </div>
     </div>
 
-    <div>
-        <h4>coming soon...</h4>
-    </div>
-
+    <script src="/static/js/app.js"></script>
 </body>
+
 </html>
