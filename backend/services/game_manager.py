@@ -262,8 +262,11 @@ class GameManager:
             return None
         
         game = lobby.current_game
-        if game.state != GameState.PLAYING or game.current_round is None:
+        current_round = game.current_round
+        if game.state != GameState.PLAYING or current_round is None:
             return None
+        
+        target_word = current_round.word.lower()
         
         if not self._check_rate_limit(player_id):
             return None
@@ -272,12 +275,11 @@ class GameManager:
         if image_array is None:
             return None
         
-        game.current_round.update_drawing(player_id, canvas_data)
+        current_round.update_drawing(player_id, canvas_data)
         
         ai_service = get_ai_service()
         predictions = ai_service.predict(image_array)
         
-        target_word = game.current_round.word.lower()
         would_be_correct = any(
             p.label.lower() == target_word and p.confidence >= AI_CONFIDENCE_THRESHOLD
             for p in predictions
@@ -299,8 +301,11 @@ class GameManager:
             return None
         
         game = lobby.current_game
-        if game.state != GameState.PLAYING or game.current_round is None:
+        current_round = game.current_round
+        if game.state != GameState.PLAYING or current_round is None:
             return None
+        
+        target_word = current_round.word.lower()
         
         image_array = image_processor.process_canvas_data(canvas_data)
         if image_array is None:
@@ -309,7 +314,6 @@ class GameManager:
         ai_service = get_ai_service()
         predictions = ai_service.predict(image_array)
         
-        target_word = game.current_round.word.lower()
         is_correct = any(
             p.label.lower() == target_word and p.confidence >= AI_CONFIDENCE_THRESHOLD
             for p in predictions

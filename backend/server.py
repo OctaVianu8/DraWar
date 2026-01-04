@@ -1,4 +1,3 @@
-# Eventlet monkey patching MUST be at the very top before any other imports
 import eventlet
 eventlet.monkey_patch()
 
