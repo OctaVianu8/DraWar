@@ -2,7 +2,7 @@ from flask_socketio import emit, join_room, leave_room
 
 from backend.services.game_manager import game_manager
 from backend.state.game_store import store
-
+from backend.models.lobby import LobbyState
 def register_handlers(socketio):
     game_manager.set_socketio(socketio)
     
@@ -240,8 +240,60 @@ def register_handlers(socketio):
         lobbies = game_manager.get_available_lobbies()
         emit('available_games', {'games': lobbies})
     
-    # TODO: Add draw_update handler when image_processor and ai_service are implemented
-    # TODO: Add submit_drawing handler when image_processor and ai_service are implemented
+    @socketio.on('draw_update')
+    def handle_draw_update(data):
+        from flask import request
+        
+        player = store.get_player_by_socket(request.sid)
+        if not player:
+            return
+        
+        canvas_data = data.get('canvas_data')
+        if not canvas_data:
+            return
+        
+        result = game_manager.handle_draw_update(player.id, canvas_data)
+        
+        if result:
+            predictions, is_correct = result
+            
+            emit('ai_prediction', {
+                'player_id': player.id,
+                'predictions': [p.to_dict() for p in predictions],
+                'is_correct': is_correct
+            })
+            
+            if player.current_lobby_id:
+                emit('player_drawing', {
+                    'player_id': player.id,
+                    'username': player.username
+                }, room=player.current_lobby_id, include_self=False)
+    
+    @socketio.on('submit_drawing')
+    def handle_submit_drawing(data):
+        from flask import request
+        
+        player = store.get_player_by_socket(request.sid)
+        if not player:
+            return
+        
+        canvas_data = data.get('canvas_data')
+        if not canvas_data:
+            return
+        
+        result = game_manager.submit_drawing(player.id, canvas_data)
+        
+        if result:
+            predictions, is_correct = result
+       
+            lobby = store.get_lobby(player.current_lobby_id) if player.current_lobby_id else None
+            
+            emit('submission_result', {
+                'player_id': player.id,
+                'predictions': [p.to_dict() for p in predictions],
+                'is_correct': is_correct,
+                'lobby': lobby.to_dict() if lobby else None
+            })
     
     @socketio.on('get_lobby_state')
     def handle_get_lobby_state(data):

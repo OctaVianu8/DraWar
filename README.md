@@ -1,1 +1,2 @@
 # DraWar
+DraWar is a multiplayer drawing game where players compete to have their drawings recognized by an AI. Players join lobbies, receive a random word to draw, and race to create a drawing that the AI model can correctly identify. The game uses real-time WebSocket communication, features multiple rounds per game, and includes a custom-trained neural network for image recognition. The first player whose drawing is correctly guessed by the AI wins the round.
