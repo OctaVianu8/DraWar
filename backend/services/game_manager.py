@@ -209,7 +209,10 @@ class GameManager:
             }, room=lobby.id)
         
         if game.state == GameState.FINISHED:
-            self._end_game(game, lobby)
+            def delayed_end_game():
+                eventlet.sleep(3.0)
+                self._end_game(game, lobby)
+            eventlet.spawn(delayed_end_game)
         else:
             self._start_next_round(game, lobby)
     

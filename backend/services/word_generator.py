@@ -15,10 +15,7 @@ class WordGenerator:
         "star",
         "apple",
         "banana",
-        # "bird",
         "butterfly",
-        # "circle",
-        # "square",
         "airplane",
         "axe",
         "basketball",
@@ -28,7 +25,6 @@ class WordGenerator:
         "camera",
         "cake",
         "dragon",
-        # "elephant",
         "face",
         "fork",
         "hamburger",
@@ -37,7 +33,6 @@ class WordGenerator:
         "hourglass",
         "mushroom",
         "nose",
-        # "octagon",
         "pencil",
         "piano",
         "radio",
@@ -56,28 +51,39 @@ class WordGenerator:
         "umbrella",
     ]
 
-    
     def __init__(self):
-        self._used_words: Set[str] = set()
+        self._shuffled_deck: List[str] = []
+        self._reshuffle()
+    
+    def _reshuffle(self) -> None:
+        self._shuffled_deck = self.WORDS.copy()
+        random.shuffle(self._shuffled_deck)
     
     def get_random_word(self, exclude: Set[str] = None) -> str:
         if exclude is None:
             exclude = set()
         
-        available = [w for w in self.WORDS if w not in exclude]
+        for _ in range(len(self.WORDS)):
+            if not self._shuffled_deck:
+                self._reshuffle()
+            
+            word = self._shuffled_deck.pop()
+            
+            if word not in exclude:
+                return word
         
-        if not available:
-            available = self.WORDS
-        
-        return random.choice(available)
+        if not self._shuffled_deck:
+            self._reshuffle()
+        return self._shuffled_deck.pop()
     
     def get_words_for_game(self, count: int) -> List[str]:
-        available = self.WORDS.copy()
-        random.shuffle(available)
-        return available[:count]
+        words = []
+        for _ in range(count):
+            words.append(self.get_random_word(exclude=set(words)))
+        return words
     
     def reset(self) -> None:
-        self._used_words.clear()
+        self._reshuffle()
 
 
 word_generator = WordGenerator()
