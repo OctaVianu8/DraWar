@@ -176,7 +176,7 @@ def main():
                 'num_classes': num_classes,
                 'accuracy': val_accuracy,
             }, model_path)
-            print(f"  ✓ Saved best model (accuracy: {val_accuracy:.2f}%)")
+            print(f"  Saved best model (accuracy: {val_accuracy:.2f}%)")
     
     save_labels(label_names, labels_path)
     
