@@ -1,3 +1,7 @@
+# Eventlet monkey patching MUST be at the very top before any other imports
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 from flask_cors import CORS
