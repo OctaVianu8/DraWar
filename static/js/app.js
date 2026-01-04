@@ -303,10 +303,7 @@ function connect() {
         lobbyState = 'starting';
         document.getElementById('gameOverOverlay').style.display = 'none';
         updateButtons();
-        // Countdown beeps
-        for (let i = 0; i < data.countdown; i++) {
-            setTimeout(() => SoundFX.countdown(), i * 1000);
-        }
+        showCountdownOverlay(data.countdown);
     });
 
     socket.on('round_start', (data) => {
@@ -476,6 +473,35 @@ function submitDrawing() {
 function getAvailableGames() {
     socket.emit('get_available_lobbies', {});
 }
+
+function showCountdownOverlay(seconds) {
+    const overlay = document.getElementById('countdownOverlay');
+    const numberEl = document.getElementById('countdownNumber');
+    
+    overlay.style.display = 'flex';
+    let remaining = seconds;
+    
+    function updateNumber() {
+        numberEl.textContent = remaining;
+        // Trigger animation restart
+        numberEl.style.animation = 'none';
+        numberEl.offsetHeight; // Force reflow
+        numberEl.style.animation = 'countdownPop 1s ease-out';
+        
+        SoundFX.countdown();
+        
+        remaining--;
+        
+        if (remaining >= 0) {
+            setTimeout(updateNumber, 1000);
+        } else {
+            overlay.style.display = 'none';
+        }
+    }
+    
+    updateNumber();
+}
+
 function showWinnerAnnouncement(winnerName) {
     document.getElementById('winnerName').textContent = winnerName;
     document.getElementById('winnerOverlay').style.display = 'flex';
