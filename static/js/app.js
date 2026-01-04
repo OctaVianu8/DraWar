@@ -8,6 +8,7 @@ let lastSendTime = 0;
 let currentRoundNum = 0;
 let maxRounds = 5;
 let timerInterval = null;
+let isEraserMode = false;
 const canvas = document.getElementById('drawingCanvas');
 const ctx = canvas.getContext('2d');
 ctx.fillStyle = '#fff';
@@ -84,7 +85,7 @@ function stopDrawing(e) {
     if (isDrawing && !hasMoved) {
         ctx.beginPath();
         ctx.arc(lastX, lastY, ctx.lineWidth / 2, 0, Math.PI * 2);
-        ctx.fillStyle = '#000';
+        ctx.fillStyle = ctx.strokeStyle;
         ctx.fill();
         sendDrawing();
     }
@@ -121,6 +122,28 @@ function clearCanvas() {
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = '#000';
+    isEraserMode = false;
+    updateEraserButton();
+}
+
+function toggleEraser() {
+    isEraserMode = !isEraserMode;
+    if (isEraserMode) {
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 20;
+    } else {
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 8;
+    }
+    updateEraserButton();
+}
+
+function updateEraserButton() {
+    const btn = document.getElementById('eraserBtn');
+    if (btn) {
+        btn.textContent = isEraserMode ? 'Pen' : 'Eraser';
+        btn.classList.toggle('active', isEraserMode);
+    }
 }
 function connect() {
     socket = io();
@@ -364,7 +387,6 @@ function copyGameId() {
             textArea.value = currentLobbyId;
             document.body.appendChild(textArea);
             textArea.select();
-            //document.execCommand('copy');
             document.body.removeChild(textArea);
             log('Lobby ID copied to clipboard!', 'success');
         });
