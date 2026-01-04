@@ -14,7 +14,7 @@ class RemoteAIService(AIServiceInterface):
         self,
         predict_url: Optional[str] = None,
         health_url: Optional[str] = None,
-        timeout: float = 5.0,
+        timeout: float = 15.0,
         top_k: int = 5,
     ):
         self.predict_url = predict_url or AI_SERVICE_URL

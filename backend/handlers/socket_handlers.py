@@ -252,7 +252,12 @@ def register_handlers(socketio):
         if not canvas_data:
             return
         
-        result = game_manager.handle_draw_update(player.id, canvas_data)
+        try:
+            result = game_manager.handle_draw_update(player.id, canvas_data)
+        except Exception as e:
+            print(f"Error handling draw update: {e}")
+            emit('error', {'code': 'AI_ERROR', 'message': f"AI Service error: {str(e)}"})
+            return
         
         if result:
             predictions, is_correct = result
@@ -281,7 +286,12 @@ def register_handlers(socketio):
         if not canvas_data:
             return
         
-        result = game_manager.submit_drawing(player.id, canvas_data)
+        try:
+            result = game_manager.submit_drawing(player.id, canvas_data)
+        except Exception as e:
+            print(f"Error submitting drawing: {e}")
+            emit('error', {'code': 'AI_ERROR', 'message': f"AI Service error: {str(e)}"})
+            return
         
         if result:
             predictions, is_correct = result

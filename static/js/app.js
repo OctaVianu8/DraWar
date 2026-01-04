@@ -235,6 +235,11 @@ function connect() {
         log(`Authenticated as ${data.username} (${data.player_id.slice(0, 8)})`, 'success');
         updateButtons();
     });
+
+    socket.on('error', (data) => {
+        log(`Error: ${data.message}`, 'error');
+        SoundFX.error();
+    });
     socket.on('lobby_created', (data) => {
         currentLobbyId = data.lobby_id;
         document.getElementById('currentGameId').textContent = data.lobby_id.slice(0, 8) + '...';
