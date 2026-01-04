@@ -1,0 +1,442 @@
+let socket = null;
+let playerId = null;
+let currentLobbyId = null;
+let lobbyState = 'waiting';
+let isDrawing = false;
+let currentRoundNum = 0;
+let maxRounds = 5;
+let timerInterval = null;
+
+const canvas = document.getElementById('drawingCanvas');
+const ctx = canvas.getContext('2d');
+ctx.fillStyle = '#fff';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+ctx.strokeStyle = '#000';
+ctx.lineWidth = 8;
+ctx.lineCap = 'round';
+ctx.lineJoin = 'round';
+
+let lastX = 0;
+let lastY = 0;
+let hasMoved = false;
+let mouseButtonDown = false;
+
+canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', stopDrawing);
+canvas.addEventListener('mouseenter', resumeDrawing);
+canvas.addEventListener('mouseleave', pauseDrawing);
+canvas.addEventListener('touchstart', handleTouch);
+canvas.addEventListener('touchmove', handleTouchMove);
+canvas.addEventListener('touchend', stopDrawing);
+
+document.addEventListener('mouseup', () => {
+    mouseButtonDown = false;
+    isDrawing = false;
+});
+
+function startDrawing(e) {
+    mouseButtonDown = true;
+    isDrawing = true;
+    hasMoved = false;
+    lastX = e.offsetX;
+    lastY = e.offsetY;
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+}
+
+function draw(e) {
+    if (!isDrawing) return;
+    hasMoved = true;
+    ctx.lineTo(e.offsetX, e.offsetY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(e.offsetX, e.offsetY);
+    lastX = e.offsetX;
+    lastY = e.offsetY;
+}
+
+function pauseDrawing() {
+    ctx.beginPath();
+}
+
+function resumeDrawing(e) {
+    if (mouseButtonDown) {
+        isDrawing = true;
+        lastX = e.offsetX;
+        lastY = e.offsetY;
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+    }
+}
+
+function stopDrawing(e) {
+    if (isDrawing && !hasMoved) {
+        ctx.beginPath();
+        ctx.arc(lastX, lastY, ctx.lineWidth / 2, 0, Math.PI * 2);
+        ctx.fillStyle = '#000';
+        ctx.fill();
+    }
+    mouseButtonDown = false;
+    isDrawing = false;
+    ctx.beginPath();
+}
+
+function handleTouch(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    startDrawing({
+        offsetX: (touch.clientX - rect.left) * scaleX,
+        offsetY: (touch.clientY - rect.top) * scaleY
+    });
+}
+
+function handleTouchMove(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    draw({
+        offsetX: (touch.clientX - rect.left) * scaleX,
+        offsetY: (touch.clientY - rect.top) * scaleY
+    });
+}
+
+function clearCanvas() {
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#000';
+}
+
+function connect() {
+    socket = io();
+
+    socket.on('connect', () => {
+        log('Connected to server', 'success');
+        updateStatus(true);
+        if (playerId) {
+            log('Reconnecting... Please re-authenticate', 'info');
+            playerId = null;
+            currentLobbyId = null;
+            currentRoundNum = 0;
+            document.getElementById('wordDisplay').style.display = 'none';
+            document.getElementById('roundDisplay').style.display = 'none';
+            document.getElementById('playersList').innerHTML = '';
+            updateButtons();
+        }
+    });
+
+    socket.on('disconnect', () => {
+        log('Disconnected from server', 'error');
+        updateStatus(false);
+        updateButtons();
+    });
+
+    socket.on('connected', (data) => {
+        log('Server: ' + data.message, 'info');
+    });
+
+    socket.on('authenticated', (data) => {
+        playerId = data.player_id;
+        log(`Authenticated as ${data.username} (${data.player_id.slice(0, 8)})`, 'success');
+        updateButtons();
+    });
+
+    socket.on('lobby_created', (data) => {
+        currentLobbyId = data.lobby_id;
+        document.getElementById('currentGameId').textContent = data.lobby_id.slice(0, 8) + '...';
+        log(`Lobby created: ${data.lobby_id.slice(0, 8)}`, 'success');
+        updateButtons();
+        updateLobbyState(data.lobby);
+    });
+
+    socket.on('player_joined', (data) => {
+        log(`${data.username} joined the lobby`, 'info');
+        updateLobbyState(data.lobby);
+    });
+
+    socket.on('joined_lobby', (data) => {
+        currentLobbyId = data.lobby_id;
+        document.getElementById('currentGameId').textContent = data.lobby_id.slice(0, 8) + '...';
+        log(`Joined lobby: ${data.lobby_id.slice(0, 8)}`, 'success');
+        updateButtons();
+        updateLobbyState(data.lobby);
+    });
+
+    socket.on('player_left', (data) => {
+        log(`${data.username} left the lobby`, 'info');
+        if (data.lobby) updateLobbyState(data.lobby);
+    });
+
+    socket.on('left_lobby', (data) => {
+        currentLobbyId = null;
+        document.getElementById('wordDisplay').style.display = 'none';
+        log('Left the lobby', 'info');
+        updateButtons();
+    });
+
+    socket.on('player_ready_update', (data) => {
+        log(`${data.username} is ready!`, 'info');
+        updateLobbyState(data.lobby);
+    });
+
+    socket.on('player_ready_for_next', (data) => {
+        log(`${data.username} is ready for next game!`, 'info');
+        updateLobbyState(data.lobby);
+    });
+
+    socket.on('lobby_settings_updated', (data) => {
+        log('Lobby settings updated', 'info');
+        updateLobbyState(data.lobby);
+    });
+
+    socket.on('game_starting', (data) => {
+        log(`Game starting in ${data.countdown} seconds!`, 'success');
+        lobbyState = 'starting';
+        document.getElementById('gameOverOverlay').style.display = 'none';
+        updateButtons();
+    });
+
+    socket.on('round_start', (data) => {
+        currentRoundNum = data.round_number || (currentRoundNum + 1);
+        lobbyState = 'playing';
+        log(`Round ${currentRoundNum} started! Word: ${data.word}`, 'success');
+        document.getElementById('wordDisplay').textContent = `Draw: ${data.word.toUpperCase()}`;
+        document.getElementById('wordDisplay').style.display = 'block';
+        document.getElementById('roundDisplay').style.display = 'block';
+        document.getElementById('currentRound').textContent = currentRoundNum;
+        document.getElementById('gameState').textContent = 'playing';
+        clearCanvas();
+        startTimer(data.duration);
+        updateButtons();
+    });
+
+    socket.on('round_end', (data) => {
+        if (data.winner_id) {
+            log(`Round ended! Winner: ${data.winner_username || data.winner_id.slice(0, 8)}`, 'success');
+            showWinnerAnnouncement(data.winner_username || 'Unknown');
+        } else {
+            log(`Round ended - timeout!`, 'info');
+        }
+        document.getElementById('timer').textContent = '';
+        document.getElementById('gameState').textContent = 'round_end';
+        if (data.scores) {
+            updateScoresFromData(data.scores);
+        }
+    });
+
+    socket.on('game_end', (data) => {
+        log(`Game ended! Winner: ${data.winner_username || 'N/A'}`, 'success');
+        document.getElementById('wordDisplay').style.display = 'none';
+        document.getElementById('roundDisplay').style.display = 'none';
+        document.getElementById('timer').textContent = '';
+        document.getElementById('gameState').textContent = 'game_over';
+        currentRoundNum = 0;
+        lobbyState = 'game_over';
+        showGameOverScreen(data.winner_username, data.final_scores);
+        updateButtons();
+        if (data.lobby) {
+            updateLobbyState(data.lobby);
+        }
+    });
+
+    socket.on('error', (data) => {
+        log(`Error: ${data.message} (${data.code})`, 'error');
+    });
+}
+
+function authenticate() {
+    const username = document.getElementById('username').value || 'TestPlayer';
+    socket.emit('authenticate', { username });
+}
+
+function createGame() {
+    socket.emit('create_lobby', {});
+}
+
+function joinGame() {
+    const lobbyId = document.getElementById('gameIdInput').value;
+    if (lobbyId) {
+        socket.emit('join_lobby', { lobby_id: lobbyId });
+        log('Joining lobby...', 'info');
+    }
+}
+
+function handleReadyClick() {
+    if (lobbyState === 'game_over') {
+        socket.emit('play_again', {});
+        log('Ready for next game...', 'info');
+    } else {
+        socket.emit('player_ready', {});
+    }
+}
+
+function leaveGame() {
+    socket.emit('leave_lobby', {});
+}
+
+function setMaxRounds() {
+    const input = document.getElementById('roundsInput');
+    const value = input.value ? parseInt(input.value) : null;
+    socket.emit('set_max_rounds', { max_rounds: value });
+    log(`Rounds set to ${value || 'default'}`, 'info');
+}
+
+function setDefaultRounds() {
+    const input = document.getElementById('roundsInput');
+    const playerCount = document.querySelectorAll('#playersList .player').length || 2;
+    const defaultRounds = 5 + (playerCount - 1) * 3;
+    input.value = defaultRounds;
+    socket.emit('set_max_rounds', { max_rounds: defaultRounds });
+    log(`Rounds set to default (${defaultRounds})`, 'info');
+}
+
+function copyGameId() {
+    if (currentLobbyId) {
+        navigator.clipboard.writeText(currentLobbyId).then(() => {
+            log('Lobby ID copied!', 'success');
+        }).catch(() => {
+            const textArea = document.createElement('textarea');
+            textArea.value = currentLobbyId;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            log('Lobby ID copied!', 'success');
+        });
+    }
+}
+
+function showWinnerAnnouncement(winnerName) {
+    document.getElementById('winnerName').textContent = winnerName;
+    document.getElementById('winnerOverlay').style.display = 'flex';
+    setTimeout(() => {
+        document.getElementById('winnerOverlay').style.display = 'none';
+    }, 3000);
+}
+
+function updateScoresFromData(scores) {
+    const list = document.getElementById('playersList');
+    let html = '';
+    for (const [pid, data] of Object.entries(scores)) {
+        html += `<div class="player"><span>${data.username} <span class="score">${data.score} pts</span></span></div>`;
+    }
+    list.innerHTML = html;
+}
+
+function showGameOverScreen(winnerName, finalScores) {
+    document.getElementById('gameWinnerName').textContent = winnerName || 'No Winner';
+    let scoresHtml = '<h3>Final Scores:</h3>';
+    if (finalScores) {
+        const sorted = Object.entries(finalScores).sort((a, b) => b[1].score - a[1].score);
+        scoresHtml += sorted.map(([pid, data], i) =>
+            `<div style="padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; margin: 5px 0;">${i === 0 ? '1st' : ''} ${data.username}: <strong>${data.score} pts</strong></div>`
+        ).join('');
+    }
+    document.getElementById('finalScores').innerHTML = scoresHtml;
+    document.getElementById('gameOverOverlay').style.display = 'flex';
+}
+
+function closeGameOver() {
+    document.getElementById('gameOverOverlay').style.display = 'none';
+}
+
+function updateStatus(connected) {
+    const el = document.getElementById('connectionStatus');
+    el.className = 'status ' + (connected ? 'connected' : 'disconnected');
+    el.textContent = connected ? 'Connected' : 'Disconnected';
+}
+
+function updateButtons() {
+    const authenticated = !!playerId;
+    const inLobby = !!currentLobbyId;
+
+    document.getElementById('authBtn').disabled = authenticated;
+    document.getElementById('createBtn').disabled = !authenticated || inLobby;
+    document.getElementById('joinBtn').disabled = !authenticated || inLobby;
+
+    document.getElementById('lobbyControls').style.display = inLobby ? 'none' : 'block';
+    document.getElementById('gameControls').style.display = inLobby ? 'block' : 'none';
+
+    const readyBtn = document.getElementById('readyBtn');
+    if (lobbyState === 'game_over') {
+        readyBtn.textContent = 'Play Again';
+        readyBtn.style.background = 'linear-gradient(90deg, #ffd700, #ff6b00)';
+        readyBtn.style.display = 'block';
+    } else if (lobbyState === 'in_game' || lobbyState === 'playing') {
+        readyBtn.style.display = 'none';
+    } else {
+        readyBtn.textContent = 'Ready!';
+        readyBtn.style.background = '';
+        readyBtn.style.display = 'block';
+    }
+}
+
+function updateLobbyState(lobby) {
+    if (!lobby) return;
+
+    const state = lobby.state;
+    lobbyState = state;
+    document.getElementById('gameState').textContent = state;
+
+    if (lobby.current_game) {
+        const game = lobby.current_game;
+        maxRounds = game.max_rounds || 5;
+        document.getElementById('maxRounds').textContent = maxRounds;
+        document.getElementById('roundInfo').textContent = `${game.rounds_played || 0}/${maxRounds}`;
+    } else {
+        document.getElementById('roundInfo').textContent = '0/5';
+    }
+
+    const roundsInput = document.getElementById('roundsInput');
+    const defaultRounds = lobby.default_rounds || (5 + (lobby.player_count - 2) * 3);
+    if (roundsInput) {
+        roundsInput.value = lobby.max_rounds || defaultRounds;
+    }
+
+    const effectiveRounds = lobby.max_rounds || defaultRounds;
+    document.getElementById('maxRounds').textContent = effectiveRounds;
+    maxRounds = effectiveRounds;
+
+    const list = document.getElementById('playersList');
+    const isGameOver = state === 'game_over';
+
+    list.innerHTML = lobby.players.map(p => {
+        let statusHtml;
+        if (isGameOver) {
+            statusHtml = p.ready_for_next ? '<span class="ready">Ready</span>' : '<span class="not-ready">Waiting...</span>';
+        } else {
+            statusHtml = `<span class="${p.is_ready ? 'ready' : 'not-ready'}">${p.is_ready ? 'Ready' : 'Waiting'}</span>`;
+        }
+        const gamesWonHtml = p.games_won > 0 ? `<span style="color: gold; margin-left: 5px;">${p.games_won}W</span>` : '';
+        return `<div class="player"><span>${p.username}${gamesWonHtml} <span class="score">${p.score || 0} pts</span></span>${statusHtml}</div>`;
+    }).join('');
+
+    updateButtons();
+}
+
+function log(message, type = '') {
+    const logEl = document.getElementById('log');
+    const time = new Date().toLocaleTimeString();
+    logEl.innerHTML = `<div class="log-entry ${type}">[${time}] ${message}</div>` + logEl.innerHTML;
+}
+
+function startTimer(duration) {
+    let remaining = duration;
+    const timerEl = document.getElementById('timer');
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        timerEl.textContent = `${remaining}s`;
+        remaining--;
+        if (remaining < 0) {
+            clearInterval(timerInterval);
+            timerEl.textContent = "Time's up!";
+        }
+    }, 1000);
+}
+
+connect();

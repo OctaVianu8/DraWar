@@ -1,10 +1,6 @@
-from flask import Flask, render_template
-
-app = Flask(__name__)
-
-@app.route("/")
-def home():
-    return render_template("index.html")
+from backend.server import app, socketio
+from backend.config import PORT, DEBUG
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5003)
+    print(f"Starting DraWar from app.py on port {PORT}...")
+    socketio.run(app, debug=DEBUG, port=PORT, host='0.0.0.0')
