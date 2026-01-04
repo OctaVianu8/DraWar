@@ -3,3 +3,6 @@ deploy_ai/
 __pycache__/
 *.pyc
 .quickdrawcache
+CONCEPTE_CS.md
+documentatie.pdf
+# documentatie.tex

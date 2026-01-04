@@ -1,0 +1,373 @@
+\documentclass[12pt,a4paper]{article}
+
+% Pachete necesare
+\usepackage[utf8]{inputenc}
+\usepackage[romanian]{babel}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\usepackage{hyperref}
+\usepackage{fontawesome5}
+
+% Definirea culorilor tematice
+\definecolor{aigreen}{RGB}{46, 204, 113}
+\definecolor{darkgreen}{RGB}{39, 174, 96}
+\definecolor{lightgreen}{RGB}{144, 238, 144}
+\definecolor{codegray}{RGB}{245, 245, 245}
+\definecolor{textdark}{RGB}{44, 62, 80}
+
+% Configurare geometrie
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+
+% Configurare hyperlink-uri
+\hypersetup{
+    colorlinks=true,
+    linkcolor=darkgreen,
+    urlcolor=aigreen,
+    citecolor=darkgreen
+}
+
+% Stilizare secțiuni
+\titleformat{\section}
+{\color{aigreen}\normalfont\Large\bfseries}
+{\color{aigreen}\thesection}{1em}{}[\color{aigreen}\titlerule]
+
+\titleformat{\subsection}
+{\color{darkgreen}\normalfont\large\bfseries}
+{\color{darkgreen}\thesubsection}{1em}{}
+
+% Header și footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\color{aigreen}\textbf{DraWar}}
+\fancyhead[R]{\color{darkgreen}\textit{Proiect Informatică Aplicată}}
+\fancyfoot[C]{\color{aigreen}\thepage}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0.5pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{aigreen}\leaders\hrule height \headrulewidth\hfill}}
+\renewcommand{\footrule}{\hbox to\headwidth{\color{aigreen}\leaders\hrule height \footrulewidth\hfill}}
+
+% Configurare liste
+\lstset{
+    backgroundcolor=\color{codegray},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{aigreen},
+    commentstyle=\color{darkgreen},
+    keywordstyle=\color{aigreen}\bfseries,
+    numberstyle=\tiny\color{darkgreen},
+    numbers=left
+}
+
+\begin{document}
+
+% Pagina de titlu
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge\color{aigreen}\textbf{DraWar}\par}
+    \vspace{0.5cm}
+    {\Large\color{darkgreen}\textit{Joc interactiv cu recunoaștere AI}\par}
+    
+    \vspace{2cm}
+    
+    \begin{tcolorbox}[colback=lightgreen!20, colframe=aigreen, width=0.8\textwidth, arc=3mm, boxrule=1.5pt]
+        \centering
+        \large
+        \textbf{Proiect Informatică Aplicată 4}\\[0.3cm]
+        Facultatea de Automatică și Calculatoare\\
+        Universitatea Politehnica București
+    \end{tcolorbox}
+    \vspace{3em}
+    \begin{tcolorbox}[colback=lightgreen!20, colframe=aigreen, width=0.8\textwidth, arc=3mm, boxrule=1.5pt]
+    \centering
+    \hyperlink{https://github.com/OctaVianu8/DraWar}{https://github.com/OctaVianu8/DraWar}
+    \end{tcolorbox}
+    
+    \vfill
+    
+    {\large\color{textdark}
+    \textbf{Echipa:}\\[0.3cm]
+    Nițu Eriko-Laurențiu\\ Crețoiu Teodora-Elena \\ Stănescu Matei-Octavian\\[1cm]
+    }
+    
+    \vfill
+    
+    {\large\color{darkgreen} Anul 2025\par}
+\end{titlepage}
+
+% Cuprins
+\tableofcontents
+\newpage
+
+% Introducere
+\section{Introducere}
+
+\begin{tcolorbox}[colback=lightgreen!10, colframe=aigreen, title=\faLightbulb\ Despre proiect, fonttitle=\bfseries]
+\textbf{DraWar} este o aplicație web interactivă care transformă desenarea într-o competiție captivantă între doi jucători și inteligența artificială. Conceptul este simplu, dar provocator: desenează mai rapid și mai clar decât adversarul tău pentru ca AI-ul să îți ghicească primul desenul!
+\end{tcolorbox}
+
+\vspace{0.5cm}
+
+Fiecare rundă începe cu un cuvânt secret afișat pe ecranele ambilor jucători. Aceștia desenează simultan folosind un canvas interactiv, iar desenele lor sunt analizate în timp real de un model AI. Primul jucător al cărui desen este recunoscut corect de AI câștigă punctul rundei.
+
+\subsection{Motivația proiectului}
+
+Am vrut să explorăm modurile de a integra într-un mod elegant și inovativ tehnologiile moderne, precum inteligența artificială, într-o experiență user-friendly și inedită de gaming. Proiectul îmbină:
+
+\begin{itemize}
+    \item[\color{aigreen}\faCheck] Interfață web intuitivă și responsivă
+    \item[\color{aigreen}\faCheck] Procesare grafică în timp real pe bază de computer vision
+    \item[\color{aigreen}\faCheck] Arhitectură simplă, implementată în Python
+\end{itemize}
+
+\subsection{Viziunea pe termen lung}
+
+În versiunile viitoare, ne imaginăm o platformă extinsă care include:
+\begin{itemize}
+    \item Sistem de conturi și autentificare
+    \item Lobby pentru găsirea adversarilor
+    \item Clasamente și statistici
+    \item Bază de date extinsă cu sute de obiecte recunoscute
+    \item Salvarea progresului și a istoricului jocurilor
+\end{itemize}
+
+\newpage
+
+% Funcționalități
+\section{Funcționalități principale}
+
+\subsection{Fluxul de joc}
+
+\begin{tcolorbox}[colback=aigreen!5, colframe=darkgreen, arc=2mm]
+\textbf{\faGamepad\ Experiența de joc:}
+
+\begin{enumerate}
+    \item \textbf{Start rundă} – Sistemul generează automat un cuvânt secret
+    \item \textbf{Desenare} – Ambii jucători desenează simultan pe canvas-uri separate
+    \item \textbf{Analiză live} – Desenele sunt trimise continuu către backend pentru recunoaștere
+    \item \textbf{Ghicire AI} – Primul desen corect identificat oprește runda
+    \item \textbf{Punctaj} – Câștigătorul rundei primește punctul
+    \item \textbf{Următoarea rundă} – Procesul se repetă cu un nou cuvânt
+\end{enumerate}
+\end{tcolorbox}
+
+\subsection{Caracteristici tehnice}
+
+\begin{description}
+    \item[\color{aigreen}Generare cuvinte] Sistemul alege aleator cuvinte din baza de date pentru fiecare rundă
+    \item[\color{aigreen}Canvas interactiv] Zonă de desen responsivă, funcțională pe orice dispozitiv
+    \item[\color{aigreen}Comunicare real-time] Transmitere instantanee a desenelor către server (HTTP/WebSockets)
+    \item[\color{aigreen}Model AI optimizat] Recunoaștere rapidă bazată pe arhitecturi de tip QuickDraw
+    \item[\color{aigreen}Detecție automată] Identificarea momentului exact când AI ghicește corect
+    \item[\color{aigreen}Gestionare rundă] Timer de 30 secunde, scoruri actualizate automat
+    \item[\color{aigreen}Interfață prietenoasă] Design simplu, intuitiv, accesibil
+    \item[\color{aigreen}Rezultate clare] Afișare câștigător, scoruri finale, statistici rundă
+\end{description}
+
+\newpage
+
+% Arhitectura
+\section{Arhitectura aplicației}
+
+\begin{tcolorbox}[colback=lightgreen!15, colframe=aigreen, title=\faCogs\ Arhitectură client-server, fonttitle=\bfseries]
+Aplicația folosește o arhitectură simplă și eficientă, în care browserul comunică direct cu un server Flask care orchestrează întreaga logică de joc și integrarea cu modelul AI.
+\end{tcolorbox}
+
+\subsection{Frontend}
+
+Frontend-ul este realizat cu tehnologii web standard și include:
+
+\begin{itemize}
+    \item \textbf{HTML \& CSS} – Interfață grafică
+    \item \textbf{Canvas API} – Zonă de desen interactivă pentru fiecare jucător
+    \item \textbf{JavaScript} – Logică client-side pentru capturarea desenelor și comunicare cu serverul
+\end{itemize}
+
+\subsection{Backend}
+
+Backend-ul este implementat integral în Python și gestionează:
+
+\begin{itemize}
+    \item \textbf{Flask Server} – Servirea aplicației și rutarea cererilor
+    \item \textbf{Game Logic} – Orchestrarea rundelor, regulilor și progresului
+    \item \textbf{Word Generation} – Selectarea aleatorie a cuvintelor pentru fiecare rundă
+    \item \textbf{Image Processing} – Recepționarea și preprocesarea desenelor
+    \item \textbf{Computer Vision} – Trecerea desenelor prin modelul de recunoaștere
+    \item \textbf{Score Management} – Actualizarea și transmiterea scorurilor
+    \item \textbf{WebSocket Communication} – Comunicare în timp real între jucători folosind Flask-SocketIO
+\end{itemize}
+
+\subsection{Modelul AI}
+
+Modelul de inteligență artificială este antrenat să recunoască obiecte comune din desene simple, similar cu arhitectura Google QuickDraw. Caracteristici:
+
+\begin{itemize}
+    \item Preprocesare automată a imaginilor (resize, normalizare, apply kernels)
+    \item Suport pentru mai multe tipuri de desene (diferite obiecte)
+    \item Implementare în PyTorch cu arhitectură CNN (Convolutional Neural Network)
+\end{itemize}
+
+\newpage
+
+% Instalare și rulare
+\section{Instalare și rulare}
+
+\subsection{Cerințe preliminare}
+
+\begin{tcolorbox}[colback=codegray, colframe=darkgreen]
+\textbf{Dependențe necesare:}
+\begin{itemize}
+    \item Python 3.x
+    \item Flask \& Flask-SocketIO (pentru server și comunicare real-time)
+    \item PyTorch (pentru modelul AI)
+    \item FastAPI \& Uvicorn (pentru AI inference server)
+    \item NumPy, Pillow (pentru procesare imagini)
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Pornirea aplicației}
+
+    \textbf{Pasul 1:} Deschideți un terminal în directorul proiectului
+
+\textbf{Pasul 2:} Porniți serverul Flask:
+
+\begin{lstlisting}[language=bash]
+python3 app.py
+\end{lstlisting}
+
+\textbf{Pasul 3:} Deschideți browserul și accesați:
+
+\begin{center}
+\begin{tcolorbox}[colback=aigreen!20, colframe=aigreen, width=0.5\textwidth, arc=2mm]
+\centering
+\Large\texttt{localhost:5003}
+\end{tcolorbox}
+\end{center}
+
+\textbf{Pasul 4:} GLHF!
+
+\newpage
+
+% Echipa
+\section{Echipa}
+
+\begin{tcolorbox}[colback=aigreen!5, colframe=darkgreen]
+
+\textbf{Stănescu Matei-Octavian:} \\
+\textbf{Contribuții:}
+\begin{itemize}
+    \item Implementarea claselor de bază (Game, Player, Round, Lobby)
+    \item Configurarea serverului Flask și a comunicării WebSocket
+    \item Antrenarea modelului CNN pentru recunoașterea desenelor
+    \item Integrarea serviciului AI cu backend-ul principal
+    \item Sistem de efecte sonore și feedback vizual
+\end{itemize}
+\textbf{Dificultăți întâmpinate:}
+\begin{itemize}
+    \item Odată ce am introdus WebSocket-uri am început să avem race conditions și jocul fie se bloca, fie era într-o stare la mine și altă stare la Eriko/Teo. \textbf{Rezolvare:} Crearea unei unici surse de adevăr în server care are verificări la fiecare pas.
+    \item De aceea am încercat să folosesc State Machine Design Pattern, dar m-am lovit de bug-uri precum Player în Lobby dar nu în Game. \textbf{Rezolvare:} Multe print-uri cu starea curentă.
+    \item Inițial am vrut să integrăm Gemini API pentru recunoasterea desenelor, dar am realizat repede că nu e fezabil, pentru ca noi aveam nevoie de ceva care sa proceseze desenul și sa dea un output aproape instant. Așa ca am folosit un model local de rețea neurală convoluțională, antrenat local pe dataset-ul Google QuickDraw.
+    \item La integrarea AI-ului cu backend-ul, am avut probleme cu formatul datelor: canvas-ul din browser trimitea imagini PNG base64 de 400x400 pixeli color, dar modelul CNN aștepta array-uri NumPy de 28x28 grayscale normalizate între 0 și 1. \textbf{Rezolvare:} Am creat (Eriko a creat) un pipeline de preprocesare în image\_processor.py care face resize și normalizare înainte de a trimite datele către serviciul AI.
+\end{itemize}
+
+\end{tcolorbox}
+
+\newpage
+
+\begin{tcolorbox}[colback=aigreen!5, colframe=darkgreen]
+
+\textbf{Crețoiu Teodora-Elena:} \\
+\textbf{Contribuții:}
+\begin{itemize}
+    \item Dezvoltarea interfeței utilizator (HTML/CSS)
+    \item Implementarea canvas-ului interactiv pentru desenare
+    \item Logica client-side în JavaScript (comunicare WebSocket, events)
+    \item Testarea și debugging-ul aplicației
+\end{itemize}
+\textbf{Dificultăți întâmpinate:}
+\begin{itemize}
+    \item Au fost necesare numeroase modificări CSS pentru a asigura o experiență cât mai bună atât pe desktop, cât și pe dispozitive mobile. Acest proces a implicat mult trial and error pentru a obține un layout stabil și ușor de utilizat.
+    \item Crearea unui canvas responsive a fost dificilă din cauza diferențelor dintre coordonatele mouse-ului și cele ale evenimentelor touch. Pe mobil apăreau frecvent probleme precum scroll-ul paginii în timpul desenului.
+    \item Utilizarea variabilelor globale precum lobbyState și isDrawing a îngreunat procesul de debugging. Resetarea completă a stării la finalul jocului sau la ieșirea din lobby a necesitat o atenție suplimentară.
+    \item Sincronizarea scorurilor, listei de jucători și a timerelor în timp real a fost dificil de gestionat. Evenimentele primite rapid de la server puteau duce la inconsistențe vizuale în interfață.
+    \item Coordonarea mai multor jucători conectați simultan prin WebSocket a generat probleme în timpul testării. Atunci când mai mulți utilizatori trimiteau desene în același timp, apăreau situații de tip race condition și erori în lanț.
+    \item Administrarea tranzițiilor dintre fazele jocului și a timerelor pentru runde a fost considerabil complexă. Timer-ele trebuiau anulate corect pentru a evita declanșarea multiplă a acelorași evenimente.
+
+\end{itemize}
+
+\end{tcolorbox}
+
+\newpage
+
+\begin{tcolorbox}[colback=aigreen!5, colframe=darkgreen]
+
+\textbf{Nițu Eriko-Laurențiu:} \\
+\textbf{Contribuții:}
+\begin{itemize}
+    \item Preprocesarea datelor din datasetul QuickDraw
+    \item Implementarea AI inference server cu FastAPI
+    \item Optimizarea modelului și deploy pe Hugging Face Spaces
+    \item Integrarea componentelor și deploy pe Render
+\end{itemize}
+\textbf{Dificultăți întâmpinate:}
+\begin{itemize}
+    \item Inițial am încercat să rulăm modelul AI direct în backend-ul Flask, dar încărcarea modelului PyTorch bloca serverul la startup și inferența încetinea răspunsurile WebSocket pentru toți jucătorii. \textbf{Rezolvare:} Am separat AI-ul într-un microserviciu independent cu FastAPI (deploy pe Hugging Face Spaces), iar backend-ul comunică cu el prin HTTP POST, trimițând imaginea ca un array JSON flatten-uit de 784 valori float.
+    \item Serverul de AI adoarme când nu e folosit, iar prima cerere dădea mereu eroare. \textbf{Rezolvare}: Am crescut timeout-ul jocului la 15 secunde pentru a lăsa AI-ul să se trezească.
+    \item PyTorch este imens și îngreuna serverul. \textbf{Rezolvare}: Am folosit versiunea "CPU-only" a PyTorch, care este mult mai mică și rapidă pentru servere fără placă video.
+    \item Pentru deployment planurile gratuite nu au destul RAM pentru a rula și jocul și AI-ul în același loc.
+    \item Ecranele de "Winner" și "Countdown" se suprapuneau greșit pe iPhone. \textbf{Rezolvare}: Le-am dat prioritate maximă de afișare (z-index).
+\textbf{Rezolvare}: Am separat proiectul: Backend-ul pe Render (consum mic) și AI-ul pe Hugging Face (optimizat pentru ML).
+
+
+\end{itemize}
+
+\end{tcolorbox}
+
+\newpage
+
+% Concluzii
+\section{Concluzii și perspective}
+
+\subsection{Realizări}
+
+Am reușit să creăm o aplicație completă și funcțională care demonstrează:
+\begin{itemize}
+    \item[\color{aigreen}\faCheck] Integrarea cu succes a unui model AI într-o aplicație web interactivă
+    \item[\color{aigreen}\faCheck] Comunicare în timp real între jucători folosind WebSocket-uri
+    \item[\color{aigreen}\faCheck] Suport pentru până la 10 jucători simultan într-un lobby
+    \item[\color{aigreen}\faCheck] Recunoașterea a peste 45 de categorii de obiecte desenate
+    \item[\color{aigreen}\faCheck] Interfață intuitivă cu feedback vizual și sonor
+    \item[\color{aigreen}\faCheck] Arhitectură scalabilă cu separarea AI server-ului de backend
+    \item[\color{aigreen}\faCheck] Deploy funcțional pe platformele cloud (Render și Hugging Face Spaces)
+\end{itemize}
+
+\subsection{Dezvoltări viitoare}
+
+Următoarele etape pe care le avem în vedere:
+
+\begin{enumerate}
+    \item \textbf{Sistem de conturi} - Autentificare, profiluri, istoric jocuri
+    \item \textbf{Lobby și matchmaking} - Găsirea automată a adversarilor
+    \item \textbf{Bază de date extinsă} - Sute de cuvinte și categorii tematice
+    \item \textbf{Clasamente globale} - Top jucători, achievements, badges
+    \item \textbf{Versiune mobilă} - Aplicație nativă iOS/Android
+\end{enumerate}
+
+\vspace{1cm}
+
+\begin{tcolorbox}[colback=aigreen!10, colframe=darkgreen, arc=3mm, boxrule=1.5pt]
+\centering
+\Large\textbf{Mulțumim!}
+
+\normalsize
+
+\end{tcolorbox}
+
+\end{document}
