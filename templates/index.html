@@ -12,7 +12,9 @@
 
 <body>
     <div class="container">
-        <h1>🎨 DraWar <button id="soundToggle" onclick="toggleSound()" style="font-size: 0.5em; padding: 8px 12px; width: auto; vertical-align: middle; margin-left: 10px; -webkit-text-fill-color: initial; background-clip: initial; -webkit-background-clip: initial;">🔊</button></h1>
+        <h1>🎨 DraWar <button id="soundToggle" onclick="toggleSound()"
+                style="font-size: 0.5em; padding: 8px 12px; width: auto; vertical-align: middle; margin-left: 10px; -webkit-text-fill-color: initial; background-clip: initial; -webkit-background-clip: initial;">🔊</button>
+        </h1>
         <div class="panel">
             <div id="connectionStatus" class="status disconnected">Disconnected</div>
 
@@ -63,28 +65,6 @@
                 <button onclick="clearCanvas()">Clear</button>
                 <button id="submitBtn" onclick="submitDrawing()">SUBMIT to AI</button>
             </div>
-            <div id="countdownOverlay" class="countdown-overlay" style="display:none;">
-                <div class="countdown-box">
-                    <div class="countdown-label">GET READY!</div>
-                    <div id="countdownNumber" class="countdown-number">3</div>
-                </div>
-            </div>
-            <div id="winnerOverlay" class="winner-overlay" style="display:none;">
-                <div class="winner-box">
-                    <h2>ROUND WINNER!</h2>
-                    <div id="winnerName" class="winner-name">Player</div>
-                    <p style="margin-top: 15px; opacity: 0.7;">Next round starting soon...</p>
-                </div>
-            </div>
-            <div id="gameOverOverlay" class="winner-overlay" style="display:none;">
-                <div class="winner-box" style="border-color: #ffd700;">
-                    <h2>GAME OVER!</h2>
-                    <p style="margin-bottom: 10px; opacity: 0.7;">Winner:</p>
-                    <div id="gameWinnerName" class="winner-name" style="font-size: 3em;">Player</div>
-                    <div id="finalScores" style="margin-top: 20px; text-align: left;"></div>
-                    <button onclick="closeGameOver()" style="margin-top: 20px; padding: 12px 30px;">Play Again</button>
-                </div>
-            </div>
 
 
         </div>
@@ -98,6 +78,29 @@
             <div id="log" class="log"></div>
             <button onclick="document.getElementById('log').innerHTML=''" class="secondary"
                 style="margin-top:10px;">Clear Log</button>
+        </div>
+    </div>
+
+    <div id="countdownOverlay" class="countdown-overlay" style="display:none;">
+        <div class="countdown-box">
+            <div class="countdown-label">GET READY!</div>
+            <div id="countdownNumber" class="countdown-number">3</div>
+        </div>
+    </div>
+    <div id="winnerOverlay" class="winner-overlay" style="display:none;">
+        <div class="winner-box">
+            <h2>ROUND WINNER!</h2>
+            <div id="winnerName" class="winner-name">Player</div>
+            <p style="margin-top: 15px; opacity: 0.7;">Next round starting soon...</p>
+        </div>
+    </div>
+    <div id="gameOverOverlay" class="winner-overlay" style="display:none;">
+        <div class="winner-box" style="border-color: #ffd700;">
+            <h2>GAME OVER!</h2>
+            <p style="margin-bottom: 10px; opacity: 0.7;">Winner:</p>
+            <div id="gameWinnerName" class="winner-name" style="font-size: 3em;">Player</div>
+            <div id="finalScores" style="margin-top: 20px; text-align: left;"></div>
+            <button onclick="closeGameOver()" style="margin-top: 20px; padding: 12px 30px;">Play Again</button>
         </div>
     </div>
 
