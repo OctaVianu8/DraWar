@@ -1,4 +1,4 @@
 #!/bin/bash
 
-python app.py
 ngrok http 5003
+python app.py

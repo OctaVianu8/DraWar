@@ -485,9 +485,10 @@ function updateLobbyState(lobby) {
         const game = lobby.current_game;
         maxRounds = game.max_rounds || 5;
         document.getElementById('maxRounds').textContent = maxRounds;
-        document.getElementById('roundInfo').textContent = `${game.rounds_played || 0}/${maxRounds}`;
+        document.getElementById('currentRound').textContent = game.rounds_played || 0;
     } else {
-        document.getElementById('roundInfo').textContent = '0/5';
+        document.getElementById('currentRound').textContent = '0';
+        document.getElementById('maxRounds').textContent = '5';
     }
 
     const roundsInput = document.getElementById('roundsInput');
