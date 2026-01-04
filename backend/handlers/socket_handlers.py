@@ -74,7 +74,7 @@ def register_handlers(socketio):
             emit('error', {'code': 'NOT_AUTHENTICATED', 'message': 'Please authenticate first'})
             return
         
-        lobby_id = data.get('lobby_id') or data.get('game_id')  # Support both
+        lobby_id = data.get('lobby_id') or data.get('game_id')
         if not lobby_id:
             emit('error', {'code': 'INVALID_DATA', 'message': 'Lobby ID required'})
             return

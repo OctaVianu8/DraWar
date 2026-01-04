@@ -6,6 +6,9 @@
 
 ---
 
+<img src="dragon.png" alt="DraWar UI" width="800"/>
+
+
 ## Limbaje și Tehnologii
 
 ### Limbaje
@@ -139,6 +142,8 @@ DraWar/
 
 ## Echipa
 
+<img src="discord.png" alt="DraWar UI" width="350"/>
+
 ### Stănescu Matei-Octavian
 
 **Contribuții:**
@@ -195,4 +200,4 @@ DraWar/
 
 Proiect pentru **Informatică Aplicată 4**  
 Facultatea de Automatică și Calculatoare  
-Universitatea Politehnica București - 2025
+Universitatea Politehnica București - 2026
