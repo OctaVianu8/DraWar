@@ -477,26 +477,26 @@ function getAvailableGames() {
 function showCountdownOverlay(seconds) {
     const overlay = document.getElementById('countdownOverlay');
     const numberEl = document.getElementById('countdownNumber');
-    
+
     overlay.style.display = 'flex';
     let remaining = seconds;
-    
+
     function updateNumber() {
         numberEl.textContent = remaining;
         numberEl.style.animation = 'none';
         numberEl.style.animation = 'countdownPop 1s ease-out';
-        
+
         SoundFX.countdown();
-        
+
         remaining--;
-        
+
         if (remaining >= 0) {
             setTimeout(updateNumber, 1000);
         } else {
             overlay.style.display = 'none';
         }
     }
-    
+
     updateNumber();
 }
 
@@ -522,14 +522,34 @@ function updateScoresFromData(scores) {
 }
 
 function showGameOverScreen(winnerName, finalScores) {
-    document.getElementById('gameWinnerName').textContent = `${winnerName || 'No Winner'}`;
+    let displayName = winnerName || 'No Winner';
+    let isTie = false;
+
+    if (finalScores) {
+        const sorted = Object.entries(finalScores).sort((a, b) => b[1].score - a[1].score);
+
+        if (sorted.length >= 2) {
+            const topScore = sorted[0][1].score;
+            const tiedPlayers = sorted.filter(([pid, data]) => data.score === topScore);
+
+            if (tiedPlayers.length > 1) {
+                isTie = true;
+                displayName = tiedPlayers.map(([pid, data]) => data.username).join(' & ');
+            }
+        }
+    }
+
+    const labelEl = document.getElementById('gameWinnerName').previousElementSibling;
+    document.getElementById('gameWinnerName').textContent = displayName;
+    if (labelEl) labelEl.textContent = isTie ? "It's a Tie!" : 'Winner:';
 
     let scoresHtml = '<h3 style="margin-bottom: 10px;">Final Scores:</h3>';
     if (finalScores) {
         const sorted = Object.entries(finalScores).sort((a, b) => b[1].score - a[1].score);
-        scoresHtml += sorted.map(([pid, data], i) => `
+        const topScore = sorted.length > 0 ? sorted[0][1].score : 0;
+        scoresHtml += sorted.map(([pid, data]) => `
             <div style="padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; margin: 5px 0;">
-                ${i === 0 ? '👑' : ''} ${data.username}: <strong>${data.score} pts</strong>
+                ${data.score === topScore ? '👑' : ''} ${data.username}: <strong>${data.score} pts</strong>
             </div>
         `).join('');
     }
