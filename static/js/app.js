@@ -22,6 +22,63 @@ let lastX = 0;
 let lastY = 0;
 let hasMoved = false;
 let mouseButtonDown = false;
+
+let soundEnabled = true;
+
+const sounds = {
+    roundStart: new Howl({
+        src: ['https://cdn.freesound.org/previews/341/341695_5858296-lq.mp3'],
+        volume: 0.5
+    }),
+    correctGuess: new Howl({
+        src: ['https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3'],
+        volume: 0.6
+    }),
+    roundWin: new Howl({
+        src: ['https://cdn.freesound.org/previews/387/387232_1474204-lq.mp3'],
+        volume: 0.5
+    }),
+    gameOver: new Howl({
+        src: ['https://cdn.freesound.org/previews/270/270319_5123851-lq.mp3'],
+        volume: 0.5
+    }),
+    timerWarning: new Howl({
+        src: ['https://cdn.freesound.org/previews/254/254316_4597545-lq.mp3'],
+        volume: 0.3
+    }),
+    countdown: new Howl({
+        src: ['https://cdn.freesound.org/previews/263/263133_2064400-lq.mp3'],
+        volume: 0.4
+    }),
+    error: new Howl({
+        src: ['https://cdn.freesound.org/previews/142/142608_1840739-lq.mp3'],
+        volume: 0.4
+    }),
+    click: new Howl({
+        src: ['https://cdn.freesound.org/previews/242/242501_4284968-lq.mp3'],
+        volume: 0.3
+    })
+};
+
+const SoundFX = {
+    roundStart: () => soundEnabled && sounds.roundStart.play(),
+    correctGuess: () => soundEnabled && sounds.correctGuess.play(),
+    roundWin: () => soundEnabled && sounds.roundWin.play(),
+    gameOver: () => soundEnabled && sounds.gameOver.play(),
+    timerWarning: () => soundEnabled && sounds.timerWarning.play(),
+    countdown: () => soundEnabled && sounds.countdown.play(),
+    error: () => soundEnabled && sounds.error.play(),
+    click: () => soundEnabled && sounds.click.play()
+};
+
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    const btn = document.getElementById('soundToggle');
+    if (btn) {
+        btn.textContent = soundEnabled ? '🔊' : '🔇';
+    }
+    if (soundEnabled) SoundFX.click();
+}
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && currentLobbyId && lobbyState === 'playing') {
         submitDrawing();
@@ -246,6 +303,10 @@ function connect() {
         lobbyState = 'starting';
         document.getElementById('gameOverOverlay').style.display = 'none';
         updateButtons();
+        // Countdown beeps
+        for (let i = 0; i < data.countdown; i++) {
+            setTimeout(() => SoundFX.countdown(), i * 1000);
+        }
     });
 
     socket.on('round_start', (data) => {
@@ -260,12 +321,14 @@ function connect() {
         clearCanvas();
         startTimer(data.duration);
         updateButtons();
+        SoundFX.roundStart();
     });
 
     socket.on('ai_prediction', (data) => {
         displayPredictions(data.predictions, data.is_correct);
         if (data.is_correct) {
             log('AI guessed correctly!', 'success');
+            SoundFX.correctGuess();
         }
     });
 
@@ -273,6 +336,7 @@ function connect() {
         if (data.winner_id) {
             log(`Round ${currentRoundNum} ended! Winner: ${data.winner_username || data.winner_id.slice(0, 8)}`, 'success');
             showWinnerAnnouncement(data.winner_username || 'Unknown');
+            SoundFX.roundWin();
         } else {
             log(`Round ${currentRoundNum} ended - timeout!`, 'info');
         }
@@ -288,6 +352,7 @@ function connect() {
         displayPredictions(data.predictions, data.is_correct);
         if (data.is_correct) {
             log('Your drawing was recognized!', 'success');
+            SoundFX.correctGuess();
         } else {
             log('AI did not recognize it - try again!', 'info');
         }
@@ -304,6 +369,7 @@ function connect() {
 
         showGameOverScreen(data.winner_username, data.final_scores);
         updateButtons();
+        SoundFX.gameOver();
 
         if (data.lobby) {
             updateLobbyState(data.lobby);
@@ -312,6 +378,7 @@ function connect() {
 
     socket.on('error', (data) => {
         log(`Error: ${data.message} (${data.code})`, 'error');
+        SoundFX.error();
     });
 
     socket.on('available_lobbies', (data) => {
@@ -582,10 +649,16 @@ function startTimer(duration) {
 
     timerInterval = setInterval(() => {
         timerEl.textContent = `⏱️ ${remaining}s`;
+        // Warning beeps in last 10 seconds
+        if (remaining <= 10 && remaining > 0) {
+            SoundFX.timerWarning();
+            timerEl.style.color = remaining <= 5 ? '#ff6b6b' : '#ffd43b';
+        }
         remaining--;
         if (remaining < 0) {
             clearInterval(timerInterval);
             timerEl.textContent = "Time's up!";
+            timerEl.style.color = '#ffd43b';
         }
     }, 1000);
 }
