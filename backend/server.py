@@ -4,10 +4,18 @@ from flask_cors import CORS
 
 from backend.config import DEBUG, PORT, SECRET_KEY
 from backend.handlers.socket_handlers import register_handlers
+import os
 
+# Get the directory where this file (server.py) is located
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_PROJECT_ROOT = os.path.dirname(_BASE_DIR)  # One level up from backend/
 
 def create_app():
-    app = Flask(__name__, template_folder='../templates')
+    app = Flask(
+        __name__,
+        template_folder=os.path.join(_PROJECT_ROOT, 'templates'),
+        static_folder=os.path.join(_PROJECT_ROOT, 'static')
+    )
     app.config['SECRET_KEY'] = SECRET_KEY
     CORS(app, origins="*")
     
