@@ -195,8 +195,8 @@ if __name__ == "__main__":
     ╔═══════════════════════════════════════════╗
     ║         DraWar AI Inference Server        ║
     ╠═══════════════════════════════════════════╣
-    ║  Running on: http://localhost:5001        ║
-    ║  Docs:       http://localhost:5001/docs   ║
+    ║  Running on: https://eriko256-drawar-ai.hf.space ║
+    ║  Docs:       /docs   ║
     ╚═══════════════════════════════════════════╝
     """)
     

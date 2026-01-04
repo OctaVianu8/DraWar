@@ -32,7 +32,8 @@ socketio = create_socketio(app)
 from backend.services.ai_service import set_ai_service
 from backend.services.remote_ai_service import RemoteAIService
 set_ai_service(RemoteAIService())
-print("[AI] Using RemoteAIService -> http://localhost:5001/predict")
+from backend.config import AI_SERVICE_URL
+print(f"[AI] Using RemoteAIService -> {AI_SERVICE_URL}")
 
 @app.route('/')
 def index():

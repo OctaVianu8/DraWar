@@ -6,7 +6,7 @@ services:
     startCommand: gunicorn --worker-class eventlet -w 1 -b 0.0.0.0:$PORT backend.server:app
     envVars:
       - key: AI_SERVICE_URL
-        value: https://huggingface.co/spaces/Eriko256/drawar-ai/predict
+        value: https://eriko256-drawar-ai.hf.space/predict
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: PRODUCTION

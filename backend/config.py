@@ -8,7 +8,7 @@ POINTS_PER_WIN = 1
 
 # AI settings
 AI_CONFIDENCE_THRESHOLD = 0.80 
-AI_SERVICE_URL = os.environ.get("AI_SERVICE_URL", "http://localhost:5001/predict") 
+AI_SERVICE_URL = os.environ.get("AI_SERVICE_URL", "https://eriko256-drawar-ai.hf.space/predict") 
 
 # Server settings
 PRODUCTION = os.environ.get("PRODUCTION", "false").lower() == "true"
