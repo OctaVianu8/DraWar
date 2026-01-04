@@ -28,4 +28,59 @@ class RemoteAIService(AIServiceInterface):
         self.timeout = timeout
         self.top_k = top_k
     
+    def predict(self, image: np.ndarray) -> List[Prediction]:
+        
+        if image.shape != (28, 28):
+            raise ValueError(f"Expected shape (28, 28) and got {image.shape}")
+        
+        if image.dtype != np.float32:
+            image = image.astype(np.float32)
+        
+        payload = {
+            "shape": [28, 28],
+            "data": image.flatten().tolist(),
+            "top_k": self.top_k,
+        }
+        
+        try:
+            response = requests.post(
+                self.predict_url,
+                json=payload,
+                timeout=self.timeout,
+                headers={"Content-Type": "application/json"},
+            )
+            response.raise_for_status()
+            
+        except RequestException as e:
+            raise RuntimeError(f"AI service failed: {e}") from e
+        
+        try:
+            data = response.json()
+            predictions = []
+            
+            for pred in data.get("predictions", []):
+                predictions.append(Prediction(
+                    label=pred["label"],
+                    confidence=pred["confidence"],
+                ))
+            
+            return predictions
+            
+        except (json.JSONDecodeError, KeyError) as e:
+            raise RuntimeError(f"Failed to parse: {e}") from e
     
+    def is_available(self) -> bool:
+        try:
+            response = requests.get(
+                self.health_url,
+                timeout=self.timeout,
+            )
+            response.raise_for_status()
+            
+            data = response.json()
+            return data.get("status") == "ok"
+            
+        except RequestException:
+            return False
+        except (json.JSONDecodeError, KeyError):
+            return False
