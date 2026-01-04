@@ -1,5 +1,7 @@
 
 import uuid
+import random
+import string
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, List, Set, Dict
@@ -8,6 +10,10 @@ from enum import Enum
 from backend.models.player import Player
 from backend.models.game import Game, GameState
 from backend.config import MAX_PLAYERS_PER_GAME
+
+
+def generate_pin():
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
 
 
 class LobbyState(Enum):
@@ -20,7 +26,7 @@ class LobbyState(Enum):
 @dataclass
 class Lobby:
 
-    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    id: str = field(default_factory=generate_pin)
     players: List[Player] = field(default_factory=list)
     current_game: Optional[Game] = None
     ready_for_next: Set[str] = field(default_factory=set)

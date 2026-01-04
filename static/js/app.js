@@ -202,6 +202,29 @@ function updateEraserButton() {
         btn.classList.toggle('active', isEraserMode);
     }
 }
+
+function resetGameUI() {
+    currentLobbyId = null;
+    currentRoundNum = 0;
+    lobbyState = 'waiting';
+
+    document.getElementById('wordDisplay').style.display = 'none';
+    document.getElementById('roundDisplay').style.display = 'none';
+    document.getElementById('timer').textContent = '';
+    document.getElementById('playersList').innerHTML = '';
+    document.getElementById('predictions').innerHTML = '';
+    document.getElementById('gameState').textContent = '-';
+    document.getElementById('currentGameId').textContent = '-';
+
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+
+    clearCanvas();
+    updateButtons();
+}
+
 function connect() {
     socket = io();
 
@@ -242,15 +265,15 @@ function connect() {
     });
     socket.on('lobby_created', (data) => {
         currentLobbyId = data.lobby_id;
-        document.getElementById('currentGameId').textContent = data.lobby_id.slice(0, 8) + '...';
-        log(`Lobby created: ${data.lobby_id.slice(0, 8)}`, 'success');
+        document.getElementById('currentGameId').textContent = data.lobby_id;
+        log(`Lobby created: ${data.lobby_id}`, 'success');
         updateButtons();
         updateLobbyState(data.lobby);
     });
     socket.on('game_created', (data) => {
         currentLobbyId = data.lobby_id || data.game_id;
-        document.getElementById('currentGameId').textContent = currentLobbyId.slice(0, 8) + '...';
-        log(`Lobby created: ${currentLobbyId.slice(0, 8)}`, 'success');
+        document.getElementById('currentGameId').textContent = currentLobbyId;
+        log(`Lobby created: ${currentLobbyId}`, 'success');
         updateButtons();
         updateLobbyState(data.lobby || data.game);
     });
@@ -262,8 +285,8 @@ function connect() {
 
     socket.on('joined_lobby', (data) => {
         currentLobbyId = data.lobby_id;
-        document.getElementById('currentGameId').textContent = data.lobby_id.slice(0, 8) + '...';
-        log(`Joined lobby: ${data.lobby_id.slice(0, 8)}`, 'success');
+        document.getElementById('currentGameId').textContent = data.lobby_id;
+        log(`Joined lobby: ${data.lobby_id}`, 'success');
         updateButtons();
         updateLobbyState(data.lobby);
     });
@@ -275,17 +298,13 @@ function connect() {
     });
 
     socket.on('left_lobby', (data) => {
-        currentLobbyId = null;
-        document.getElementById('wordDisplay').style.display = 'none';
+        resetGameUI();
         log('Left the lobby', 'info');
-        updateButtons();
     });
 
     socket.on('left_game', (data) => {
-        currentLobbyId = null;
-        document.getElementById('wordDisplay').style.display = 'none';
+        resetGameUI();
         log('Left the lobby', 'info');
-        updateButtons();
     });
 
     socket.on('player_ready_update', (data) => {
