@@ -40,7 +40,6 @@ def register_handlers(socketio):
             'username': player.username
         })
     
-<<<<<<< HEAD
     @socketio.on('create_lobby')
     def handle_create_lobby(data=None):
         from flask import request
@@ -126,14 +125,10 @@ def register_handlers(socketio):
             }, room=lobby_id)
         
         emit('left_lobby', {'lobby_id': lobby_id})
-=======
-    
->>>>>>> 392c462 (start implementing socket handlers)
     
     @socketio.on('leave_game')
     def handle_leave_game(data=None):
         handle_leave_lobby(data)
-<<<<<<< HEAD
     
     @socketio.on('set_max_rounds')
     def handle_set_max_rounds(data):
@@ -161,9 +156,6 @@ def register_handlers(socketio):
         emit('lobby_settings_updated', {
             'lobby': lobby.to_dict()
         }, room=lobby.id)
-=======
-
->>>>>>> 392c462 (start implementing socket handlers)
     
     @socketio.on('player_ready')
     def handle_player_ready(data=None):
@@ -250,7 +242,6 @@ def register_handlers(socketio):
     
     # TODO: Add draw_update handler when image_processor and ai_service are implemented
     # TODO: Add submit_drawing handler when image_processor and ai_service are implemented
-<<<<<<< HEAD
     
     @socketio.on('get_lobby_state')
     def handle_get_lobby_state(data):
@@ -269,5 +260,3 @@ def register_handlers(socketio):
     @socketio.on('get_game_state')
     def handle_get_game_state(data):
         handle_get_lobby_state(data)
-=======
->>>>>>> 392c462 (start implementing socket handlers)

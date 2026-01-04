@@ -1,12 +1,13 @@
+
 let socket = null;
 let playerId = null;
 let currentLobbyId = null;
 let lobbyState = 'waiting';
 let isDrawing = false;
+let lastSendTime = 0;
 let currentRoundNum = 0;
 let maxRounds = 5;
 let timerInterval = null;
-
 const canvas = document.getElementById('drawingCanvas');
 const ctx = canvas.getContext('2d');
 ctx.fillStyle = '#fff';
@@ -20,7 +21,11 @@ let lastX = 0;
 let lastY = 0;
 let hasMoved = false;
 let mouseButtonDown = false;
-
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && currentLobbyId && lobbyState === 'playing') {
+        submitDrawing();
+    }
+});
 canvas.addEventListener('mousedown', startDrawing);
 canvas.addEventListener('mousemove', draw);
 canvas.addEventListener('mouseup', stopDrawing);
@@ -29,7 +34,6 @@ canvas.addEventListener('mouseleave', pauseDrawing);
 canvas.addEventListener('touchstart', handleTouch);
 canvas.addEventListener('touchmove', handleTouchMove);
 canvas.addEventListener('touchend', stopDrawing);
-
 document.addEventListener('mouseup', () => {
     mouseButtonDown = false;
     isDrawing = false;
@@ -48,12 +52,18 @@ function startDrawing(e) {
 function draw(e) {
     if (!isDrawing) return;
     hasMoved = true;
+
     ctx.lineTo(e.offsetX, e.offsetY);
     ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(e.offsetX, e.offsetY);
+
     lastX = e.offsetX;
     lastY = e.offsetY;
+    if (Date.now() - lastSendTime > 150) {
+        sendDrawing();
+        lastSendTime = Date.now();
+    }
 }
 
 function pauseDrawing() {
@@ -76,6 +86,7 @@ function stopDrawing(e) {
         ctx.arc(lastX, lastY, ctx.lineWidth / 2, 0, Math.PI * 2);
         ctx.fillStyle = '#000';
         ctx.fill();
+        sendDrawing();
     }
     mouseButtonDown = false;
     isDrawing = false;
@@ -111,7 +122,6 @@ function clearCanvas() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = '#000';
 }
-
 function connect() {
     socket = io();
 
@@ -145,7 +155,6 @@ function connect() {
         log(`Authenticated as ${data.username} (${data.player_id.slice(0, 8)})`, 'success');
         updateButtons();
     });
-
     socket.on('lobby_created', (data) => {
         currentLobbyId = data.lobby_id;
         document.getElementById('currentGameId').textContent = data.lobby_id.slice(0, 8) + '...';
@@ -153,10 +162,17 @@ function connect() {
         updateButtons();
         updateLobbyState(data.lobby);
     });
+    socket.on('game_created', (data) => {
+        currentLobbyId = data.lobby_id || data.game_id;
+        document.getElementById('currentGameId').textContent = currentLobbyId.slice(0, 8) + '...';
+        log(`Lobby created: ${currentLobbyId.slice(0, 8)}`, 'success');
+        updateButtons();
+        updateLobbyState(data.lobby || data.game);
+    });
 
     socket.on('player_joined', (data) => {
         log(`${data.username} joined the lobby`, 'info');
-        updateLobbyState(data.lobby);
+        updateLobbyState(data.lobby || data.game);
     });
 
     socket.on('joined_lobby', (data) => {
@@ -170,6 +186,7 @@ function connect() {
     socket.on('player_left', (data) => {
         log(`${data.username} left the lobby`, 'info');
         if (data.lobby) updateLobbyState(data.lobby);
+        if (data.game) updateLobbyState(data.game);
     });
 
     socket.on('left_lobby', (data) => {
@@ -179,13 +196,20 @@ function connect() {
         updateButtons();
     });
 
+    socket.on('left_game', (data) => {
+        currentLobbyId = null;
+        document.getElementById('wordDisplay').style.display = 'none';
+        log('Left the lobby', 'info');
+        updateButtons();
+    });
+
     socket.on('player_ready_update', (data) => {
         log(`${data.username} is ready!`, 'info');
-        updateLobbyState(data.lobby);
+        updateLobbyState(data.lobby || data.game);
     });
 
     socket.on('player_ready_for_next', (data) => {
-        log(`${data.username} is ready for next game!`, 'info');
+        log(`${data.username} is ready for next game! 🔄`, 'info');
         updateLobbyState(data.lobby);
     });
 
@@ -215,17 +239,34 @@ function connect() {
         updateButtons();
     });
 
+    socket.on('ai_prediction', (data) => {
+        displayPredictions(data.predictions, data.is_correct);
+        if (data.is_correct) {
+            log('AI guessed correctly!', 'success');
+        }
+    });
+
     socket.on('round_end', (data) => {
         if (data.winner_id) {
-            log(`Round ended! Winner: ${data.winner_username || data.winner_id.slice(0, 8)}`, 'success');
+            log(`Round ${currentRoundNum} ended! Winner: ${data.winner_username || data.winner_id.slice(0, 8)}`, 'success');
             showWinnerAnnouncement(data.winner_username || 'Unknown');
         } else {
-            log(`Round ended - timeout!`, 'info');
+            log(`Round ${currentRoundNum} ended - timeout!`, 'info');
         }
         document.getElementById('timer').textContent = '';
         document.getElementById('gameState').textContent = 'round_end';
+
         if (data.scores) {
             updateScoresFromData(data.scores);
+        }
+    });
+
+    socket.on('submission_result', (data) => {
+        displayPredictions(data.predictions, data.is_correct);
+        if (data.is_correct) {
+            log('Your drawing was recognized!', 'success');
+        } else {
+            log('AI did not recognize it - try again!', 'info');
         }
     });
 
@@ -237,8 +278,10 @@ function connect() {
         document.getElementById('gameState').textContent = 'game_over';
         currentRoundNum = 0;
         lobbyState = 'game_over';
+
         showGameOverScreen(data.winner_username, data.final_scores);
         updateButtons();
+
         if (data.lobby) {
             updateLobbyState(data.lobby);
         }
@@ -247,8 +290,21 @@ function connect() {
     socket.on('error', (data) => {
         log(`Error: ${data.message} (${data.code})`, 'error');
     });
-}
 
+    socket.on('available_lobbies', (data) => {
+        log(`Available lobbies: ${data.lobbies.length}`, 'info');
+        if (data.lobbies.length > 0) {
+            document.getElementById('gameIdInput').value = data.lobbies[0].id;
+        }
+    });
+
+    socket.on('available_games', (data) => {
+        log(`Available lobbies: ${data.games.length}`, 'info');
+        if (data.games.length > 0) {
+            document.getElementById('gameIdInput').value = data.games[0].id;
+        }
+    });
+}
 function authenticate() {
     const username = document.getElementById('username').value || 'TestPlayer';
     socket.emit('authenticate', { username });
@@ -264,6 +320,10 @@ function joinGame() {
         socket.emit('join_lobby', { lobby_id: lobbyId });
         log('Joining lobby...', 'info');
     }
+}
+
+function setReady() {
+    socket.emit('player_ready', {});
 }
 
 function handleReadyClick() {
@@ -298,19 +358,35 @@ function setDefaultRounds() {
 function copyGameId() {
     if (currentLobbyId) {
         navigator.clipboard.writeText(currentLobbyId).then(() => {
-            log('Lobby ID copied!', 'success');
+            log('Lobby ID copied to clipboard!', 'success');
         }).catch(() => {
             const textArea = document.createElement('textarea');
             textArea.value = currentLobbyId;
             document.body.appendChild(textArea);
             textArea.select();
-            document.execCommand('copy');
+            //document.execCommand('copy');
             document.body.removeChild(textArea);
-            log('Lobby ID copied!', 'success');
+            log('Lobby ID copied to clipboard!', 'success');
         });
     }
 }
 
+function sendDrawing() {
+    if (!socket || !currentLobbyId) return;
+    const canvasData = canvas.toDataURL('image/png');
+    socket.emit('draw_update', { canvas_data: canvasData });
+}
+
+function submitDrawing() {
+    if (!socket || !currentLobbyId) return;
+    const canvasData = canvas.toDataURL('image/png');
+    socket.emit('submit_drawing', { canvas_data: canvasData });
+    log('Submitting drawing...', 'info');
+}
+
+function getAvailableGames() {
+    socket.emit('get_available_lobbies', {});
+}
 function showWinnerAnnouncement(winnerName) {
     document.getElementById('winnerName').textContent = winnerName;
     document.getElementById('winnerOverlay').style.display = 'flex';
@@ -323,19 +399,26 @@ function updateScoresFromData(scores) {
     const list = document.getElementById('playersList');
     let html = '';
     for (const [pid, data] of Object.entries(scores)) {
-        html += `<div class="player"><span>${data.username} <span class="score">${data.score} pts</span></span></div>`;
+        html += `
+            <div class="player">
+                <span>${data.username} <span class="score">${data.score} pts</span></span>
+            </div>
+        `;
     }
     list.innerHTML = html;
 }
 
 function showGameOverScreen(winnerName, finalScores) {
-    document.getElementById('gameWinnerName').textContent = winnerName || 'No Winner';
-    let scoresHtml = '<h3>Final Scores:</h3>';
+    document.getElementById('gameWinnerName').textContent = `${winnerName || 'No Winner'}`;
+
+    let scoresHtml = '<h3 style="margin-bottom: 10px;">Final Scores:</h3>';
     if (finalScores) {
         const sorted = Object.entries(finalScores).sort((a, b) => b[1].score - a[1].score);
-        scoresHtml += sorted.map(([pid, data], i) =>
-            `<div style="padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; margin: 5px 0;">${i === 0 ? '1st' : ''} ${data.username}: <strong>${data.score} pts</strong></div>`
-        ).join('');
+        scoresHtml += sorted.map(([pid, data], i) => `
+            <div style="padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; margin: 5px 0;">
+                ${i === 0 ? '👑' : ''} ${data.username}: <strong>${data.score} pts</strong>
+            </div>
+        `).join('');
     }
     document.getElementById('finalScores').innerHTML = scoresHtml;
     document.getElementById('gameOverOverlay').style.display = 'flex';
@@ -343,6 +426,23 @@ function showGameOverScreen(winnerName, finalScores) {
 
 function closeGameOver() {
     document.getElementById('gameOverOverlay').style.display = 'none';
+}
+
+function playAgain() {
+    socket.emit('play_again', {});
+    log('Ready for next game...', 'info');
+}
+
+function resetForNewGame() {
+    currentLobbyId = null;
+    currentRoundNum = 0;
+    lobbyState = 'waiting';
+    document.getElementById('playersList').innerHTML = '';
+    document.getElementById('predictions').innerHTML = '';
+    document.getElementById('wordDisplay').style.display = 'none';
+    document.getElementById('roundDisplay').style.display = 'none';
+    clearCanvas();
+    updateButtons();
 }
 
 function updateStatus(connected) {
@@ -358,10 +458,8 @@ function updateButtons() {
     document.getElementById('authBtn').disabled = authenticated;
     document.getElementById('createBtn').disabled = !authenticated || inLobby;
     document.getElementById('joinBtn').disabled = !authenticated || inLobby;
-
     document.getElementById('lobbyControls').style.display = inLobby ? 'none' : 'block';
     document.getElementById('gameControls').style.display = inLobby ? 'block' : 'none';
-
     const readyBtn = document.getElementById('readyBtn');
     if (lobbyState === 'game_over') {
         readyBtn.textContent = 'Play Again';
@@ -370,7 +468,7 @@ function updateButtons() {
     } else if (lobbyState === 'in_game' || lobbyState === 'playing') {
         readyBtn.style.display = 'none';
     } else {
-        readyBtn.textContent = 'Ready!';
+        readyBtn.textContent = '✓ Ready!';
         readyBtn.style.background = '';
         readyBtn.style.display = 'block';
     }
@@ -408,15 +506,43 @@ function updateLobbyState(lobby) {
     list.innerHTML = lobby.players.map(p => {
         let statusHtml;
         if (isGameOver) {
-            statusHtml = p.ready_for_next ? '<span class="ready">Ready</span>' : '<span class="not-ready">Waiting...</span>';
+            if (p.ready_for_next) {
+                statusHtml = '<span class="ready"> Ready</span>';
+            } else {
+                statusHtml = '<span class="not-ready">Waiting...</span>';
+            }
         } else {
-            statusHtml = `<span class="${p.is_ready ? 'ready' : 'not-ready'}">${p.is_ready ? 'Ready' : 'Waiting'}</span>`;
+            statusHtml = `<span class="${p.is_ready ? 'ready' : 'not-ready'}">${p.is_ready ? '✓ Ready' : 'Waiting'}</span>`;
         }
-        const gamesWonHtml = p.games_won > 0 ? `<span style="color: gold; margin-left: 5px;">${p.games_won}W</span>` : '';
-        return `<div class="player"><span>${p.username}${gamesWonHtml} <span class="score">${p.score || 0} pts</span></span>${statusHtml}</div>`;
+
+        const gamesWonHtml = p.games_won > 0 ? `<span style="color: gold; margin-left: 5px;">🏆${p.games_won}</span>` : '';
+
+        return `
+            <div class="player">
+                <span>${p.username}${gamesWonHtml} <span class="score">${p.score || 0} pts</span></span>
+                ${statusHtml}
+            </div>
+        `;
     }).join('');
 
     updateButtons();
+}
+
+function updateGameState(game) {
+    updateLobbyState(game);
+}
+
+function displayPredictions(predictions, isCorrect) {
+    const container = document.getElementById('predictions');
+    container.innerHTML = predictions.map((p, i) => `
+        <div class="prediction ${i === 0 && isCorrect ? 'match' : ''}">
+            <span>${p.label}</span>
+            <span>${(p.confidence * 100).toFixed(1)}%</span>
+        </div>
+        <div class="confidence-bar">
+            <div class="confidence-fill" style="width: ${p.confidence * 100}%"></div>
+        </div>
+    `).join('');
 }
 
 function log(message, type = '') {
@@ -428,9 +554,11 @@ function log(message, type = '') {
 function startTimer(duration) {
     let remaining = duration;
     const timerEl = document.getElementById('timer');
+
     if (timerInterval) clearInterval(timerInterval);
+
     timerInterval = setInterval(() => {
-        timerEl.textContent = `${remaining}s`;
+        timerEl.textContent = `⏱️ ${remaining}s`;
         remaining--;
         if (remaining < 0) {
             clearInterval(timerInterval);
