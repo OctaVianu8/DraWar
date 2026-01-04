@@ -483,9 +483,7 @@ function showCountdownOverlay(seconds) {
     
     function updateNumber() {
         numberEl.textContent = remaining;
-        // Trigger animation restart
         numberEl.style.animation = 'none';
-        numberEl.offsetHeight; // Force reflow
         numberEl.style.animation = 'countdownPop 1s ease-out';
         
         SoundFX.countdown();
@@ -675,7 +673,6 @@ function startTimer(duration) {
 
     timerInterval = setInterval(() => {
         timerEl.textContent = `⏱️ ${remaining}s`;
-        // Warning beeps in last 10 seconds
         if (remaining <= 10 && remaining > 0) {
             SoundFX.timerWarning();
             timerEl.style.color = remaining <= 5 ? '#ff6b6b' : '#ffd43b';
