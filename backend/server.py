@@ -4,21 +4,12 @@ from flask_cors import CORS
 
 from backend.config import DEBUG, PORT, SECRET_KEY
 from backend.handlers.socket_handlers import register_handlers
-import os
 
-# Get the directory where this file (server.py) is located
-_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-_PROJECT_ROOT = os.path.dirname(_BASE_DIR)  # One level up from backend/
 
 def create_app():
-    app = Flask(
-        __name__,
-        template_folder=os.path.join(_PROJECT_ROOT, 'templates'),
-        static_folder=os.path.join(_PROJECT_ROOT, 'static')
-    )
+    app = Flask(__name__, template_folder='../templates', static_folder='../static')
     app.config['SECRET_KEY'] = SECRET_KEY
     CORS(app, origins="*")
-    
     return app
 
 
@@ -30,6 +21,7 @@ def create_socketio(app):
         logger=DEBUG,
         engineio_logger=DEBUG
     )
+    
     register_handlers(socketio)
     
     return socketio
@@ -37,6 +29,10 @@ def create_socketio(app):
 app = create_app()
 socketio = create_socketio(app)
 
+from backend.services.ai_service import set_ai_service
+from backend.services.remote_ai_service import RemoteAIService
+set_ai_service(RemoteAIService())
+print("[AI] Using RemoteAIService -> http://localhost:5001/predict")
 
 @app.route('/')
 def index():

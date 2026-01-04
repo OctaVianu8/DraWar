@@ -1,7 +1,6 @@
 import json
 import numpy as np
 from typing import List, Tuple, Optional
-from pathlib import Path
 
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -126,7 +125,6 @@ class QuickDrawDataset(Dataset):
         return len(self.images)
     
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int]:
-        
         image = self.images[idx]
         label = self.labels[idx]
         
@@ -144,7 +142,6 @@ def create_dataloaders(
     batch_size: int = 64,
     num_workers: int = 0,
 ) -> Tuple[DataLoader, DataLoader, List[str]]:
-
     train_dataset = QuickDrawDataset(
         categories=categories,
         samples_per_category=samples_per_category,
@@ -195,4 +192,3 @@ if __name__ == "__main__":
     images, batch_labels = next(iter(train_loader))
     print(f"\nBatch shape: {images.shape}")
     print(f"Labels shape: {batch_labels.shape}")
-

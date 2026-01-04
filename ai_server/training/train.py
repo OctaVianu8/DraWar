@@ -1,9 +1,6 @@
-import os
 import sys
-import json
 import argparse
 from pathlib import Path
-from datetime import datetime
 
 import torch
 import torch.nn as nn
@@ -16,7 +13,6 @@ from training.dataset import create_dataloaders, save_labels, DEFAULT_CATEGORIES
 
 
 class QuickDrawCNN(nn.Module):
-
     def __init__(self, num_classes: int):
         super().__init__()
         
@@ -176,7 +172,7 @@ def main():
                 'num_classes': num_classes,
                 'accuracy': val_accuracy,
             }, model_path)
-            print(f"  Saved best model (accuracy: {val_accuracy:.2f}%)")
+            print(f"Saved best model (accuracy: {val_accuracy:.2f}%)")
     
     save_labels(label_names, labels_path)
     
@@ -186,6 +182,7 @@ def main():
     print(f"Best validation accuracy: {best_accuracy:.2f}%")
     print(f"Model saved to: {model_path}")
     print(f"Labels saved to: {labels_path}")
+
 
 if __name__ == "__main__":
     main()

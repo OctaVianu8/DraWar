@@ -1,4 +1,3 @@
-import os
 import sys
 import json
 from pathlib import Path
@@ -11,7 +10,6 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 sys.path.insert(0, str(Path(__file__).parent))
-
 
 class PredictRequest(BaseModel):
     shape: List[int] = Field(..., description="Shape of the image array, e.g. [28, 28]")
@@ -40,8 +38,8 @@ class PredictResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
 
+
 class QuickDrawCNN(nn.Module):
-    
     def __init__(self, num_classes: int):
         super().__init__()
         
@@ -76,7 +74,7 @@ class QuickDrawCNN(nn.Module):
         return x
 
 
-class ModelManager:    
+class ModelManager:
     def __init__(self):
         self.model: Optional[nn.Module] = None
         self.labels: List[str] = []
@@ -182,7 +180,7 @@ async def predict(request: PredictRequest):
     
     try:
         image = np.array(request.data, dtype=np.float32).reshape(request.shape)
-                predictions = model_manager.predict(image, top_k=request.top_k)
+        predictions = model_manager.predict(image, top_k=request.top_k)
         
         return PredictResponse(predictions=predictions)
         
@@ -195,7 +193,7 @@ if __name__ == "__main__":
     
     print("""
     ╔═══════════════════════════════════════════╗
-    ║   :)    DraWar AI Inference Server   :)   ║
+    ║         DraWar AI Inference Server        ║
     ╠═══════════════════════════════════════════╣
     ║  Running on: http://localhost:5001        ║
     ║  Docs:       http://localhost:5001/docs   ║
