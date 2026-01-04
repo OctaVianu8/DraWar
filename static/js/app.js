@@ -8,6 +8,7 @@ let lastSendTime = 0;
 let currentRoundNum = 0;
 let maxRounds = 5;
 let timerInterval = null;
+let isEraserMode = false;
 const canvas = document.getElementById('drawingCanvas');
 const ctx = canvas.getContext('2d');
 ctx.fillStyle = '#fff';
@@ -21,6 +22,63 @@ let lastX = 0;
 let lastY = 0;
 let hasMoved = false;
 let mouseButtonDown = false;
+
+let soundEnabled = true;
+
+const sounds = {
+    roundStart: new Howl({
+        src: ['https://cdn.freesound.org/previews/341/341695_5858296-lq.mp3'],
+        volume: 0.5
+    }),
+    correctGuess: new Howl({
+        src: ['https://cdn.freesound.org/previews/270/270304_5123851-lq.mp3'],
+        volume: 0.6
+    }),
+    roundWin: new Howl({
+        src: ['https://cdn.freesound.org/previews/387/387232_1474204-lq.mp3'],
+        volume: 0.5
+    }),
+    gameOver: new Howl({
+        src: ['https://cdn.freesound.org/previews/270/270319_5123851-lq.mp3'],
+        volume: 0.5
+    }),
+    timerWarning: new Howl({
+        src: ['https://cdn.freesound.org/previews/254/254316_4597545-lq.mp3'],
+        volume: 0.3
+    }),
+    countdown: new Howl({
+        src: ['https://cdn.freesound.org/previews/263/263133_2064400-lq.mp3'],
+        volume: 0.4
+    }),
+    error: new Howl({
+        src: ['https://cdn.freesound.org/previews/142/142608_1840739-lq.mp3'],
+        volume: 0.4
+    }),
+    click: new Howl({
+        src: ['https://cdn.freesound.org/previews/242/242501_4284968-lq.mp3'],
+        volume: 0.3
+    })
+};
+
+const SoundFX = {
+    roundStart: () => soundEnabled && sounds.roundStart.play(),
+    correctGuess: () => soundEnabled && sounds.correctGuess.play(),
+    roundWin: () => soundEnabled && sounds.roundWin.play(),
+    gameOver: () => soundEnabled && sounds.gameOver.play(),
+    timerWarning: () => soundEnabled && sounds.timerWarning.play(),
+    countdown: () => soundEnabled && sounds.countdown.play(),
+    error: () => soundEnabled && sounds.error.play(),
+    click: () => soundEnabled && sounds.click.play()
+};
+
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    const btn = document.getElementById('soundToggle');
+    if (btn) {
+        btn.textContent = soundEnabled ? '🔊' : '🔇';
+    }
+    if (soundEnabled) SoundFX.click();
+}
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && currentLobbyId && lobbyState === 'playing') {
         submitDrawing();
@@ -84,7 +142,7 @@ function stopDrawing(e) {
     if (isDrawing && !hasMoved) {
         ctx.beginPath();
         ctx.arc(lastX, lastY, ctx.lineWidth / 2, 0, Math.PI * 2);
-        ctx.fillStyle = '#000';
+        ctx.fillStyle = ctx.strokeStyle;
         ctx.fill();
         sendDrawing();
     }
@@ -121,6 +179,28 @@ function clearCanvas() {
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = '#000';
+    isEraserMode = false;
+    updateEraserButton();
+}
+
+function toggleEraser() {
+    isEraserMode = !isEraserMode;
+    if (isEraserMode) {
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 20;
+    } else {
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 8;
+    }
+    updateEraserButton();
+}
+
+function updateEraserButton() {
+    const btn = document.getElementById('eraserBtn');
+    if (btn) {
+        btn.textContent = isEraserMode ? 'Pen' : 'Eraser';
+        btn.classList.toggle('active', isEraserMode);
+    }
 }
 function connect() {
     socket = io();
@@ -223,6 +303,7 @@ function connect() {
         lobbyState = 'starting';
         document.getElementById('gameOverOverlay').style.display = 'none';
         updateButtons();
+        showCountdownOverlay(data.countdown);
     });
 
     socket.on('round_start', (data) => {
@@ -237,12 +318,14 @@ function connect() {
         clearCanvas();
         startTimer(data.duration);
         updateButtons();
+        SoundFX.roundStart();
     });
 
     socket.on('ai_prediction', (data) => {
         displayPredictions(data.predictions, data.is_correct);
         if (data.is_correct) {
             log('AI guessed correctly!', 'success');
+            SoundFX.correctGuess();
         }
     });
 
@@ -250,6 +333,7 @@ function connect() {
         if (data.winner_id) {
             log(`Round ${currentRoundNum} ended! Winner: ${data.winner_username || data.winner_id.slice(0, 8)}`, 'success');
             showWinnerAnnouncement(data.winner_username || 'Unknown');
+            SoundFX.roundWin();
         } else {
             log(`Round ${currentRoundNum} ended - timeout!`, 'info');
         }
@@ -265,6 +349,7 @@ function connect() {
         displayPredictions(data.predictions, data.is_correct);
         if (data.is_correct) {
             log('Your drawing was recognized!', 'success');
+            SoundFX.correctGuess();
         } else {
             log('AI did not recognize it - try again!', 'info');
         }
@@ -281,6 +366,7 @@ function connect() {
 
         showGameOverScreen(data.winner_username, data.final_scores);
         updateButtons();
+        SoundFX.gameOver();
 
         if (data.lobby) {
             updateLobbyState(data.lobby);
@@ -289,6 +375,7 @@ function connect() {
 
     socket.on('error', (data) => {
         log(`Error: ${data.message} (${data.code})`, 'error');
+        SoundFX.error();
     });
 
     socket.on('available_lobbies', (data) => {
@@ -364,7 +451,6 @@ function copyGameId() {
             textArea.value = currentLobbyId;
             document.body.appendChild(textArea);
             textArea.select();
-            //document.execCommand('copy');
             document.body.removeChild(textArea);
             log('Lobby ID copied to clipboard!', 'success');
         });
@@ -387,6 +473,33 @@ function submitDrawing() {
 function getAvailableGames() {
     socket.emit('get_available_lobbies', {});
 }
+
+function showCountdownOverlay(seconds) {
+    const overlay = document.getElementById('countdownOverlay');
+    const numberEl = document.getElementById('countdownNumber');
+
+    overlay.style.display = 'flex';
+    let remaining = seconds;
+
+    function updateNumber() {
+        numberEl.textContent = remaining;
+        numberEl.style.animation = 'none';
+        numberEl.style.animation = 'countdownPop 1s ease-out';
+
+        SoundFX.countdown();
+
+        remaining--;
+
+        if (remaining >= 0) {
+            setTimeout(updateNumber, 1000);
+        } else {
+            overlay.style.display = 'none';
+        }
+    }
+
+    updateNumber();
+}
+
 function showWinnerAnnouncement(winnerName) {
     document.getElementById('winnerName').textContent = winnerName;
     document.getElementById('winnerOverlay').style.display = 'flex';
@@ -409,14 +522,34 @@ function updateScoresFromData(scores) {
 }
 
 function showGameOverScreen(winnerName, finalScores) {
-    document.getElementById('gameWinnerName').textContent = `${winnerName || 'No Winner'}`;
+    let displayName = winnerName || 'No Winner';
+    let isTie = false;
+
+    if (finalScores) {
+        const sorted = Object.entries(finalScores).sort((a, b) => b[1].score - a[1].score);
+
+        if (sorted.length >= 2) {
+            const topScore = sorted[0][1].score;
+            const tiedPlayers = sorted.filter(([pid, data]) => data.score === topScore);
+
+            if (tiedPlayers.length > 1) {
+                isTie = true;
+                displayName = tiedPlayers.map(([pid, data]) => data.username).join(' & ');
+            }
+        }
+    }
+
+    const labelEl = document.getElementById('gameWinnerName').previousElementSibling;
+    document.getElementById('gameWinnerName').textContent = displayName;
+    if (labelEl) labelEl.textContent = isTie ? "It's a Tie!" : 'Winner:';
 
     let scoresHtml = '<h3 style="margin-bottom: 10px;">Final Scores:</h3>';
     if (finalScores) {
         const sorted = Object.entries(finalScores).sort((a, b) => b[1].score - a[1].score);
-        scoresHtml += sorted.map(([pid, data], i) => `
+        const topScore = sorted.length > 0 ? sorted[0][1].score : 0;
+        scoresHtml += sorted.map(([pid, data]) => `
             <div style="padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; margin: 5px 0;">
-                ${i === 0 ? '👑' : ''} ${data.username}: <strong>${data.score} pts</strong>
+                ${data.score === topScore ? '👑' : ''} ${data.username}: <strong>${data.score} pts</strong>
             </div>
         `).join('');
     }
@@ -560,10 +693,15 @@ function startTimer(duration) {
 
     timerInterval = setInterval(() => {
         timerEl.textContent = `⏱️ ${remaining}s`;
+        if (remaining <= 10 && remaining > 0) {
+            SoundFX.timerWarning();
+            timerEl.style.color = remaining <= 5 ? '#ff6b6b' : '#ffd43b';
+        }
         remaining--;
         if (remaining < 0) {
             clearInterval(timerInterval);
             timerEl.textContent = "Time's up!";
+            timerEl.style.color = '#ffd43b';
         }
     }, 1000);
 }

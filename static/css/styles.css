@@ -1,6 +1,8 @@
-
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
 body {
     font-family: 'Segoe UI', system-ui, sans-serif;
@@ -19,11 +21,11 @@ body {
 }
 
 .panel {
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 16px;
     padding: 20px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 h1 {
@@ -50,10 +52,17 @@ h2 {
     display: inline-block;
     margin-bottom: 15px;
 }
-.status.connected { background: #00b894; }
-.status.disconnected { background: #d63031; }
 
-input, button {
+.status.connected {
+    background: #00b894;
+}
+
+.status.disconnected {
+    background: #d63031;
+}
+
+input,
+button {
     width: 100%;
     padding: 12px;
     border: none;
@@ -63,10 +72,13 @@ input, button {
 }
 
 input {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
     color: #fff;
 }
-input::placeholder { color: rgba(255,255,255,0.5); }
+
+input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
 
 button {
     background: linear-gradient(90deg, #00d4ff, #7b2cbf);
@@ -75,13 +87,24 @@ button {
     font-weight: 600;
     transition: transform 0.2s, opacity 0.2s;
 }
-button:hover { transform: translateY(-2px); opacity: 0.9; }
-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-button.secondary {
-    background: rgba(255,255,255,0.1);
+
+button:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
 }
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+button.secondary {
+    background: rgba(255, 255, 255, 0.1);
+}
+
 .log {
-    background: rgba(0,0,0,0.3);
+    background: rgba(0, 0, 0, 0.3);
     border-radius: 8px;
     padding: 10px;
     height: 200px;
@@ -90,10 +113,23 @@ button.secondary {
     font-size: 0.8em;
     line-height: 1.5;
 }
-.log-entry { padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.log-entry.error { color: #ff6b6b; }
-.log-entry.success { color: #51cf66; }
-.log-entry.info { color: #74c0fc; }
+
+.log-entry {
+    padding: 2px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.log-entry.error {
+    color: #ff6b6b;
+}
+
+.log-entry.success {
+    color: #51cf66;
+}
+
+.log-entry.info {
+    color: #74c0fc;
+}
 
 
 #drawingCanvas {
@@ -110,16 +146,27 @@ button.secondary {
     gap: 10px;
     margin-top: 10px;
 }
-.canvas-controls button { flex: 1; }
+
+.canvas-controls button {
+    flex: 1;
+}
+
+.canvas-controls button.active {
+    background: linear-gradient(90deg, #ff6b6b, #ffa502);
+    box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+}
 
 
 .game-info {
-    background: rgba(0,212,255,0.1);
+    background: rgba(0, 212, 255, 0.1);
     border-radius: 8px;
     padding: 15px;
     margin-bottom: 15px;
 }
-.game-info p { margin: 5px 0; }
+
+.game-info p {
+    margin: 5px 0;
+}
 
 .word-display {
     font-size: 2em;
@@ -141,21 +188,23 @@ button.secondary {
     display: flex;
     justify-content: space-between;
     padding: 8px;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 6px;
     margin-bottom: 5px;
 }
+
 .prediction.match {
-    background: rgba(0,184,148,0.3);
+    background: rgba(0, 184, 148, 0.3);
     border: 1px solid #00b894;
 }
 
 .confidence-bar {
     height: 4px;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 2px;
     margin-top: 4px;
 }
+
 .confidence-fill {
     height: 100%;
     background: linear-gradient(90deg, #00d4ff, #7b2cbf);
@@ -168,13 +217,20 @@ button.secondary {
     justify-content: space-between;
     align-items: center;
     padding: 10px;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
     margin-bottom: 8px;
 }
-.player .ready { color: #00b894; }
-.player .not-ready { color: #fdcb6e; }
-.player .score { 
+
+.player .ready {
+    color: #00b894;
+}
+
+.player .not-ready {
+    color: #fdcb6e;
+}
+
+.player .score {
     background: linear-gradient(90deg, #00d4ff, #7b2cbf);
     padding: 2px 8px;
     border-radius: 10px;
@@ -186,9 +242,57 @@ button.secondary {
     text-align: center;
     font-size: 1.2em;
     padding: 10px;
-    background: rgba(0,212,255,0.2);
+    background: rgba(0, 212, 255, 0.2);
     border-radius: 8px;
     margin-bottom: 10px;
+}
+
+.countdown-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+}
+
+.countdown-box {
+    text-align: center;
+}
+
+.countdown-label {
+    font-size: 2em;
+    color: #00d4ff;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    animation: pulse 0.5s ease-in-out infinite alternate;
+}
+
+.countdown-number {
+    font-size: 12em;
+    font-weight: bold;
+    background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: countdownPop 1s ease-out;
+    line-height: 1;
+}
+
+@keyframes countdownPop {
+    0% { transform: scale(2); opacity: 0; }
+    50% { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse {
+    0% { opacity: 0.7; }
+    100% { opacity: 1; }
 }
 
 .winner-overlay {
@@ -197,7 +301,7 @@ button.secondary {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0, 0, 0, 0.8);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -214,8 +318,15 @@ button.secondary {
 }
 
 @keyframes popIn {
-    0% { transform: scale(0.5); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 .winner-box h2 {
@@ -232,9 +343,10 @@ button.secondary {
 }
 
 @media (max-width: 1024px) {
-    .container { 
-        grid-template-columns: 280px 1fr; 
+    .container {
+        grid-template-columns: 280px 1fr;
     }
+
     .panel:last-child {
         grid-column: 1 / -1;
     }
@@ -244,40 +356,40 @@ button.secondary {
     body {
         padding: 10px;
     }
-    
-    .container { 
-        grid-template-columns: 1fr; 
+
+    .container {
+        grid-template-columns: 1fr;
         gap: 15px;
     }
-    
-    h1 { 
-        grid-column: 1; 
+
+    h1 {
+        grid-column: 1;
         font-size: 1.8em;
         margin-bottom: 10px;
     }
-    
+
     h2 {
         font-size: 1em;
         margin-bottom: 10px;
     }
-    
+
     .panel {
         padding: 15px;
         border-radius: 12px;
     }
-  
+
     #drawingCanvas {
         width: 100%;
         max-width: 400px;
         height: auto;
         aspect-ratio: 1;
     }
-    
+
     .word-display {
         font-size: 1.4em;
         padding: 12px;
     }
-    
+
     .round-display {
         font-size: 1em;
         padding: 8px;
@@ -287,64 +399,71 @@ button.secondary {
         padding: 14px;
         font-size: 1em;
     }
-    
+
     input {
         padding: 14px;
         font-size: 1em;
     }
-    
+
     .canvas-controls {
         flex-direction: column;
     }
-    
+
     .canvas-controls button {
         flex: none;
     }
-    
+
     .game-info {
         padding: 10px;
     }
-    
+
     .game-info p {
         font-size: 0.9em;
     }
+
     .player {
         flex-direction: column;
         align-items: flex-start;
         gap: 5px;
     }
-    
+
     .prediction {
         padding: 6px;
         font-size: 0.9em;
     }
-   
+
     .log {
         height: 120px;
         font-size: 0.75em;
     }
-    
+
     .winner-box {
         padding: 25px 30px;
         margin: 15px;
         max-width: 90vw;
     }
-    
+
     .winner-box h2 {
         font-size: 1.4em;
     }
-    
+
     .winner-box .winner-name {
         font-size: 1.8em;
     }
 }
+
 @media (max-width: 400px) {
-    h1 { font-size: 1.5em; }
-    
-    .word-display { font-size: 1.2em; }
-    
-    button, input { 
-        padding: 12px; 
+    h1 {
+        font-size: 1.5em;
+    }
+
+    .word-display {
+        font-size: 1.2em;
+    }
+
+    button,
+    input {
+        padding: 12px;
         font-size: 0.9em;
     }
 }
